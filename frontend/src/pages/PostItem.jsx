@@ -1,64 +1,215 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase";
+import { Upload, Send, ImagePlus, Tag, DollarSign, FileText, Layers } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
+
+const CATEGORIES = ["Electronics", "Books", "Furniture", "Clothing", "Sports", "Other"];
 
 function PostItem() {
-
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [image, setImage] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false); // Added loading state
 
-  function handleSubmit(e) {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth(); // Destructured currentUser
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    setSubmitting(true);
 
-    const newItem = {
-      title,
-      price,
-      description
-    };
+    try {
+      const newItem = {
+        title,
+        price: Number(price),
+        description,
+        category: category || "Other",
+        image,
+        status: "available",
+        sellerId: currentUser.uid, // Added sellerId
+        sellerName: currentUser.displayName || "IITD Student", // Added sellerName
+        sellerEmail: currentUser.email, // Added sellerEmail
+        createdAt: serverTimestamp() // Changed to serverTimestamp
+      };
 
-    console.log("New item posted:", newItem);
+      await addDoc(collection(db, "items"), newItem);
+      toast.success("Item listed successfully!");
+      navigate("/marketplace");
+    } catch (error) {
+      toast.error("Failed to list item. Try again.");
+      setSubmitting(false);
+    }
+  }
 
-    alert("Item submitted!");
-
-    setTitle("");
-    setPrice("");
-    setDescription("");
+  function handleImageChange(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setImage(imageUrl);
+      setImagePreview(imageUrl);
+    }
   }
 
   return (
-    <div style={{padding:"20px"}}>
-      <h1>Post an Item</h1>
+    <div className="post-item">
+      <div className="post-item-header">
+        <h1>
+          List a <span className="gradient-text">New Item</span>
+        </h1>
+        <p>Fill in the details and your item will be live in seconds.</p>
+      </div>
 
-      <form onSubmit={handleSubmit} style={{
-        display:"flex",
-        flexDirection:"column",
-        gap:"15px",
-        maxWidth:"400px"
-      }}>
+      <form onSubmit={handleSubmit} className="post-item-form">
+        <div className="form-fields">
+          <div className="form-group">
+            <label htmlFor="post-title">
+              <Tag size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
+              Item Title
+            </label>
+            <input
+              type="text"
+              id="post-title"
+              placeholder="e.g. MacBook Air M2"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
 
-        <input
-          type="text"
-          placeholder="Item title"
-          value={title}
-          onChange={(e)=>setTitle(e.target.value)}
-          required
-        />
+          <div className="form-group">
+            <label htmlFor="post-price">
+              <DollarSign size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
+              Price (₹)
+            </label>
+            <input
+              type="number"
+              id="post-price"
+              placeholder="e.g. 45000"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+              min="0"
+            />
+          </div>
 
-        <input
-          type="number"
-          placeholder="Price"
-          value={price}
-          onChange={(e)=>setPrice(e.target.value)}
-          required
-        />
+          <div className="form-group">
+            <label htmlFor="post-category">
+              <Layers size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
+              Category
+            </label>
+            <select
+              id="post-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">Select a category</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
 
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e)=>setDescription(e.target.value)}
-        />
+          <div className="form-group">
+            <label htmlFor="post-description">
+              <FileText size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
+              Description
+            </label>
+            <textarea
+              id="post-description"
+              placeholder="Describe your item — condition, age, reason for selling..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={5}
+            />
+          </div>
 
-        <button type="submit">Submit Item</button>
+          <button
+            type="submit"
+            className="submit-btn"
+            disabled={submitting || !title || !price}
+          >
+            {submitting ? (
+              <>
+                <span style={{
+                  width: "18px", height: "18px",
+                  border: "2px solid rgba(255,255,255,0.3)",
+                  borderTop: "2px solid white",
+                  borderRadius: "50%",
+                  animation: "spin 0.8s linear infinite",
+                  display: "inline-block"
+                }}></span>
+                Posting...
+              </>
+            ) : (
+              <>
+                <Send size={18} />
+                List Item
+              </>
+            )}
+          </button>
+        </div>
 
+        <div className="image-upload-area">
+          <label style={{
+            fontSize: "var(--font-sm)",
+            fontWeight: 600,
+            color: "var(--text-secondary)",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px"
+          }}>
+            <ImagePlus size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
+            Item Photo
+          </label>
+          <div className={`image-dropzone ${imagePreview ? "has-image" : ""}`}>
+            {imagePreview ? (
+              <img src={imagePreview} alt="Preview" className="preview-img" />
+            ) : (
+              <>
+                <div className="dropzone-icon">
+                  <Upload size={24} />
+                </div>
+                <p>Click to upload a photo</p>
+                <p style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>
+                  PNG, JPG up to 5MB
+                </p>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              id="post-image"
+            />
+          </div>
+          {imagePreview && (
+            <button
+              type="button"
+              onClick={() => {
+                setImage("");
+                setImagePreview(null);
+              }}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "var(--radius-md)",
+                background: "var(--bg-card)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-secondary)",
+                fontSize: "var(--font-sm)",
+                cursor: "pointer",
+                transition: "all var(--transition-fast)"
+              }}
+            >
+              Remove Photo
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );
