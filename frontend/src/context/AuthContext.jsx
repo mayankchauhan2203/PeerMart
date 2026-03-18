@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  sendEmailVerification,
   updateProfile,
   deleteUser,
-  updatePassword
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from "firebase/auth";
 import { auth, db, storage } from "../firebase";
 import { doc, deleteDoc } from "firebase/firestore";
@@ -24,58 +23,42 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  async function signup(email, password, name) {
+  async function sendMagicLink(email) {
     if (!email.endsWith("@iitd.ac.in")) {
       return { success: false, error: "not-iitd" };
     }
 
+    const actionCodeSettings = {
+      url: window.location.origin + '/login',
+      handleCodeInApp: true,
+    };
+
     try {
-      // Create account
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Add name to profile
-      await updateProfile(result.user, { displayName: name });
-      
-      // Send verification email
-      await sendEmailVerification(result.user);
-      
-      // Sign out immediately so they are forced to verify before entering the app
-      // await signOut(auth);
-      
-      toast.success("Account created successfully! You are now logged in.");
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
       return { success: true };
     } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        toast.error("This email is already registered.");
-      } else {
-        toast.error("Failed to create account. Try a stronger password.");
-      }
+      console.error("Magic link error:", error);
       return { success: false, error: error.message };
     }
   }
 
-  async function login(email, password) {
-    if (!email.endsWith("@iitd.ac.in")) {
-      return { success: false, error: "not-iitd" };
-    }
-
+  async function verifyMagicLink(email, url) {
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Check if email is verified
-      // TEMPORARILY DISABLED: IITD emails often block automated Firebase verification emails
-      // if (!result.user.emailVerified) {
-      //   await signOut(auth);
-      //   toast.error("Please verify your email address before logging in.");
-      //   return { success: false, error: "unverified" };
-      // }
-
-      toast.success("Successfully logged in!");
-      return { success: true };
+      if (isSignInWithEmailLink(auth, url)) {
+        const result = await signInWithEmailLink(auth, email, url);
+        window.localStorage.removeItem('emailForSignIn');
+        return { success: true, user: result.user };
+      }
+      return { success: false, error: "invalid-link" };
     } catch (error) {
-      toast.error("Invalid email or password.");
+      console.error("Magic link verification error:", error);
       return { success: false, error: error.message };
     }
+  }
+
+  function isMagicLink(url) {
+    return isSignInWithEmailLink(auth, url);
   }
 
   function logout() {
@@ -142,32 +125,15 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  async function changeUserPassword(newPassword) {
-    if (!currentUser) return { success: false, error: "No active user" };
-    try {
-      await updatePassword(currentUser, newPassword);
-      toast.success("Password changed successfully!");
-      return { success: true };
-    } catch (error) {
-      console.error("Password change error:", error);
-      if (error.code === 'auth/requires-recent-login') {
-        toast.error("For security, you must have logged in recently to change your password. Redirecting...");
-        await signOut(auth); // Force log out
-        return { success: false, error: "requires-recent-login", forceLogout: true };
-      } else {
-        toast.error(`Failed to change password: ${error.message}`);
-      }
-      return { success: false, error: error.message };
-    }
-  }
+
 
   const value = {
     currentUser,
-    signup,
-    login,
+    sendMagicLink,
+    verifyMagicLink,
+    isMagicLink,
     logout,
     deleteAccount,
-    changeUserPassword,
     loading
   };
 

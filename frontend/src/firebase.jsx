@@ -4,13 +4,13 @@ import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBLen9BIPrWbKa6cdqrqQoHASDMUkw9XcM",
-  authDomain: "peermart-17ed2.firebaseapp.com",
-  projectId: "peermart-17ed2",
-  storageBucket: "peermart-17ed2.firebasestorage.app",
-  messagingSenderId: "772937250769",
-  appId: "1:772937250769:web:d58d7484906489b4f752f0",
-  measurementId: "G-6L1MKL26L6"
+  apiKey: "AIzaSyBqXBg744HOowqgo1Vc6ve8oqFb9IY8BPE",
+  authDomain: "peermart-7331c.firebaseapp.com",
+  projectId: "peermart-7331c",
+  storageBucket: "peermart-7331c.firebasestorage.app",
+  messagingSenderId: "383735186843",
+  appId: "1:383735186843:web:99d1aaf9b482a4df88cd3e",
+  measurementId: "G-HHS3ZQ5DC7"
 };
 
 const app = initializeApp(firebaseConfig);

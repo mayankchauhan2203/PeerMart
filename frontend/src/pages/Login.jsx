@@ -1,19 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShoppingBag, Shield, Mail, Lock, User as UserIcon } from "lucide-react";
+import { ShoppingBag, Shield, Mail, User as UserIcon } from "lucide-react";
 import toast from "react-hot-toast";
+import { updateProfile } from "firebase/auth";
 
 function Login() {
-  const { login, signup, currentUser } = useAuth();
+  const { sendMagicLink, verifyMagicLink, isMagicLink, currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Check if coming from email link
+    if (isMagicLink(window.location.href)) {
+      let emailForSignIn = window.localStorage.getItem('emailForSignIn');
+      if (!emailForSignIn) {
+        emailForSignIn = window.prompt("Please provide your email for confirmation");
+      }
+      
+      if (emailForSignIn) {
+        setLoading(true);
+        verifyMagicLink(emailForSignIn, window.location.href)
+          .then(async (result) => {
+            if (result.success) {
+              const savedName = window.localStorage.getItem('nameForSignIn');
+              if (savedName && result.user) {
+                try {
+                  await updateProfile(result.user, { displayName: savedName });
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+              // Toast is mostly handled in verifyMagicLink, but we can do it here too just in case
+              toast.success("Successfully logged in!");
+              window.localStorage.removeItem('nameForSignIn');
+              const from = location.state?.from?.pathname || "/marketplace";
+              navigate(from, { replace: true });
+            } else {
+              setLoading(false);
+            }
+          });
+      }
+    }
+  }, [isMagicLink, verifyMagicLink, navigate, location.state]);
 
   // If already logged in, redirect away
   if (currentUser) {
@@ -37,19 +71,14 @@ function Login() {
         setLoading(false);
         return;
       }
-      
-      const result = await signup(email, password, name);
-      if (result.success) {
-        // Switch to login mode so they can login after verifying
-        setIsRegistering(false);
-        setPassword("");
-      }
+      window.localStorage.setItem('nameForSignIn', name.trim());
+    }
+
+    const result = await sendMagicLink(email);
+    if (!result.success) {
+      toast.error(result.error === "not-iitd" ? "You must use an @iitd.ac.in email." : "Failed to send link.");
     } else {
-      const result = await login(email, password);
-      if (result.success) {
-        const from = location.state?.from?.pathname || "/marketplace";
-        navigate(from, { replace: true });
-      }
+      toast.success("Login link sent! Please check your email.");
     }
 
     setLoading(false);
@@ -62,14 +91,14 @@ function Login() {
           <div className="brand-icon-large">
             <ShoppingBag size={32} color="white" />
           </div>
-          <h1>{isRegistering ? "Create Account" : "Welcome Back"}</h1>
+          <h1>{isRegistering ? "Create Account" : "Access PeerMart"}</h1>
         </div>
 
         <div className="login-alert" style={{ marginBottom: 'var(--space-xl)', padding: 'var(--space-md)' }}>
           <Shield size={18} className="alert-icon" />
           <div className="alert-text">
             <p style={{ margin: 0, fontSize: '0.85rem' }}>
-              Restricted to <code>@iitd.ac.in</code> emails only.
+              Restricted to <code>@iitd.ac.in</code> emails only. Passwordless login.
             </p>
           </div>
         </div>
@@ -106,29 +135,13 @@ function Login() {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <div className="input-with-icon">
-              <Lock size={18} className="input-icon" />
-              <input 
-                type="password" 
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-                minLength={6}
-              />
-            </div>
-          </div>
-
           <button 
             type="submit" 
             className="login-btn" 
             disabled={loading}
             style={{ marginTop: 'var(--space-xl)', background: 'var(--accent-gradient)', color: '#fff', border: 'none' }}
           >
-            {loading ? "Please wait..." : (isRegistering ? "Sign Up" : "Sign In")}
+            {loading ? "Please wait..." : "Send Magic Link"}
           </button>
         </form>
 
@@ -140,7 +153,6 @@ function Login() {
               className="toggle-btn"
               onClick={() => {
                 setIsRegistering(!isRegistering);
-                setPassword("");
               }}
             >
               {isRegistering ? "Sign In" : "Create Account"}
