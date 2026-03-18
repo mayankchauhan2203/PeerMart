@@ -46,6 +46,9 @@ function Marketplace() {
   }
 
   const filteredItems = items.filter((item) => {
+    if (currentUser && item.sellerId === currentUser.uid) {
+      return false;
+    }
     const matchesSearch =
       item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -157,7 +160,7 @@ function Marketplace() {
 
               <div className="product-card-body">
                 <h3>{item.title}</h3>
-                <div className="price">₹{item.price}</div>
+                <div className="price">₹{Math.round(item.price * 1.08)}</div>
                 <p className="description">{item.description || "No description provided"}</p>
 
                 {item.sellerId === currentUser?.uid ? (
