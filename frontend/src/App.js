@@ -6,6 +6,7 @@ import Marketplace from "./pages/Marketplace.jsx";
 import PostItem from "./pages/PostItem.jsx";
 import Profile from "./pages/Profile.jsx";
 import MyListings from "./pages/MyListings.jsx";
+import Notifications from "./pages/Notifications.jsx";
 import Login from "./pages/Login.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
@@ -68,6 +69,11 @@ function App() {
             <Route path="/my-listings" element={
               <ProtectedRoute>
                 <MyListings />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             } />
           </Routes>

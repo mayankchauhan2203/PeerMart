@@ -15,12 +15,16 @@ import toast from "react-hot-toast";
 
 const AuthContext = createContext();
 
+// Add your admin emails here
+const ADMIN_EMAILS = ["admin@iitd.ac.in", "cmaya@iitd.ac.in"];
+
 export function useAuth() {
   return useContext(AuthContext);
 }
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function sendMagicLink(email) {
@@ -115,9 +119,11 @@ export function AuthProvider({ children }) {
         //   setCurrentUser(null);
         } else {
           setCurrentUser(user);
+          setIsAdmin(ADMIN_EMAILS.includes(user.email));
         }
       } else {
         setCurrentUser(null);
+        setIsAdmin(false);
       }
       setLoading(false);
     });
@@ -129,6 +135,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     currentUser,
+    isAdmin,
     sendMagicLink,
     verifyMagicLink,
     isMagicLink,
