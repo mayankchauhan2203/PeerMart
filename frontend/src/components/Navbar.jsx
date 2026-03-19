@@ -1,13 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ShoppingBag, Home, Store, PlusCircle, User, LogIn } from "lucide-react";
+import { ShoppingBag, Home, Store, PlusCircle, User, LogIn, Bell } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -18,6 +21,29 @@ function Navbar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location]);
+
+  // Real-time unread notification count
+  useEffect(() => {
+    if (!currentUser) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const recipients = isAdmin ? [currentUser.uid, "ADMIN_GROUP"] : [currentUser.uid];
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "in", recipients),
+      where("read", "==", false)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setUnreadCount(snapshot.size);
+    }, (error) => {
+      console.error("Notification count listener error:", error);
+    });
+
+    return () => unsubscribe();
+  }, [currentUser, isAdmin]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -46,6 +72,14 @@ function Navbar() {
               <Link to="/post-item" className={`nav-link ${isActive("/post-item") ? "active" : ""}`}>
                 <PlusCircle size={16} />
                 Sell
+              </Link>
+              <Link to="/notifications" className={`nav-link nav-link-bell ${isActive("/notifications") ? "active" : ""}`}>
+                <div className="bell-wrapper">
+                  <Bell size={16} />
+                  {unreadCount > 0 && (
+                    <span className="notif-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>
+                  )}
+                </div>
               </Link>
               <Link to="/profile" className="nav-link nav-link-profile">
                 <div className="nav-avatar">
@@ -87,6 +121,15 @@ function Navbar() {
             <Link to="/post-item" className={`nav-link ${isActive("/post-item") ? "active" : ""}`}>
               <PlusCircle size={20} />
               Sell Item
+            </Link>
+            <Link to="/notifications" className={`nav-link ${isActive("/notifications") ? "active" : ""}`}>
+              <div className="bell-wrapper">
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="notif-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>
+                )}
+              </div>
+              Notifications
             </Link>
             <Link to="/profile" className={`nav-link ${isActive("/profile") ? "active" : ""}`}>
               <User size={20} />

@@ -1,4 +1,4 @@
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -34,10 +34,43 @@ function Marketplace() {
     setLoading(false);
   }
 
-  async function reserveItem(id) {
+  async function reserveItem(item) {
     try {
-      const itemRef = doc(db, "items", id);
-      await updateDoc(itemRef, { status: "reserved" });
+      const itemRef = doc(db, "items", item.id);
+      await updateDoc(itemRef, {
+        status: "reserved",
+        reservedBy: currentUser.uid,
+        reservedByName: currentUser.displayName || "IITD Student",
+        reservedByEmail: currentUser.email,
+      });
+
+      // 1. Create ANONYMOUS notification for the seller
+      await addDoc(collection(db, "notifications"), {
+        recipientId: item.sellerId,
+        type: "reservation_anonymous",
+        itemId: item.id,
+        itemTitle: item.title,
+        itemPrice: item.price,
+        // intentionally omitting buyerName and buyerEmail
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+
+      // 2. Create DETAILED notification for the Admin Meditator
+      await addDoc(collection(db, "notifications"), {
+        recipientId: "ADMIN_GROUP",
+        type: "reservation_admin",
+        itemId: item.id,
+        itemTitle: item.title,
+        itemPrice: item.price,
+        sellerName: item.sellerName || "Unknown Seller",
+        sellerEmail: item.sellerEmail || "Unknown Email",
+        buyerName: currentUser.displayName || "IITD Student",
+        buyerEmail: currentUser.email,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+
       toast.success("Item reserved successfully!");
       fetchItems();
     } catch (error) {
@@ -171,7 +204,7 @@ function Marketplace() {
                 ) : item.status === "available" ? (
                   <button
                     className="buy-btn buy-btn-active"
-                    onClick={() => reserveItem(item.id)}
+                    onClick={() => reserveItem(item)}
                   >
                     <ShoppingCart size={16} />
                     Reserve Now
