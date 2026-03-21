@@ -21,7 +21,11 @@ function App() {
       <BrowserRouter>
       <div className="app">
         <Toaster
-          position="top-right"
+          position="top-center"
+          containerStyle={{
+            top: '50%',
+            transform: 'translateY(-50%)'
+          }}
           toastOptions={{
             duration: 3000,
             style: {

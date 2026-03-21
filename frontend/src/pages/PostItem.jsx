@@ -19,10 +19,17 @@ function PostItem() {
   const [loading, setLoading] = useState(false); // Added loading state
 
   const navigate = useNavigate();
-  const { currentUser } = useAuth(); // Destructured currentUser
+  const { currentUser, userData } = useAuth(); // Destructured currentUser and userData
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (!userData?.phone) {
+      toast.error("Please add your phone number in Profile before listing an item.");
+      navigate("/profile");
+      return;
+    }
+
     setSubmitting(true);
 
     try {

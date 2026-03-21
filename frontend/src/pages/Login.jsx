@@ -6,17 +6,20 @@ import toast from "react-hot-toast";
 import { updateProfile } from "firebase/auth";
 
 function Login() {
-  const { sendMagicLink, verifyMagicLink, isMagicLink, currentUser } = useAuth();
+  const { sendMagicLink, verifyMagicLink, isMagicLink, currentUser, loginWithPassword, registerWithPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Check if coming from email link
+    // MAGIC LINK LOGIC COMMENTED OUT FOR TESTING
+    /*
     if (isMagicLink(window.location.href)) {
       let emailForSignIn = window.localStorage.getItem('emailForSignIn');
       if (!emailForSignIn) {
@@ -47,6 +50,7 @@ function Login() {
           });
       }
     }
+    */
   }, [isMagicLink, verifyMagicLink, navigate, location.state]);
 
   // If already logged in, redirect away
@@ -71,15 +75,39 @@ function Login() {
         setLoading(false);
         return;
       }
-      window.localStorage.setItem('nameForSignIn', name.trim());
+      if (password.length < 6) {
+        toast.error("Password must be at least 6 characters.");
+        setLoading(false);
+        return;
+      }
+
+      const result = await registerWithPassword(email, password, name.trim());
+      if (!result.success) {
+        toast.error(result.error === "not-iitd" ? "You must use an @iitd.ac.in email." : result.error);
+      } else {
+        toast.success("Account created! Logging in...");
+        const from = location.state?.from?.pathname || "/marketplace";
+        navigate(from, { replace: true });
+      }
+    } else {
+      const result = await loginWithPassword(email, password);
+      if (!result.success) {
+        toast.error(result.error === "not-iitd" ? "You must use an @iitd.ac.in email." : "Invalid credentials.");
+      } else {
+        toast.success("Successfully logged in!");
+        const from = location.state?.from?.pathname || "/marketplace";
+        navigate(from, { replace: true });
+      }
     }
 
+    /* MAGIC LINK LOGIC COMMENTED OUT FOR TESTING
     const result = await sendMagicLink(email);
     if (!result.success) {
       toast.error(result.error === "not-iitd" ? "You must use an @iitd.ac.in email." : "Failed to send link.");
     } else {
       toast.success("Login link sent! Please check your email.");
     }
+    */
 
     setLoading(false);
   }
@@ -98,7 +126,7 @@ function Login() {
           <Shield size={18} className="alert-icon" />
           <div className="alert-text">
             <p style={{ margin: 0, fontSize: '0.85rem' }}>
-              Restricted to <code>@iitd.ac.in</code> emails only. Passwordless login.
+              Restricted to <code>@iitd.ac.in</code> emails only. Password login (Testing Mode).
             </p>
           </div>
         </div>
@@ -135,13 +163,28 @@ function Login() {
             </div>
           </div>
 
+          <div className="form-group">
+            <label>Password</label>
+            <div className="input-with-icon">
+              <Shield size={18} className="input-icon" />
+              <input 
+                type="password" 
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+
           <button 
             type="submit" 
             className="login-btn" 
             disabled={loading}
             style={{ marginTop: 'var(--space-xl)', background: 'var(--accent-gradient)', color: '#fff', border: 'none' }}
           >
-            {loading ? "Please wait..." : "Send Magic Link"}
+            {loading ? "Please wait..." : (isRegistering ? "Create Account" : "Sign In")}
           </button>
         </form>
 

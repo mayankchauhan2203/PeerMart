@@ -1,7 +1,7 @@
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { useEffect, useState } from "react";
-import { Bell, CheckCheck, ShoppingCart, Mail, Clock } from "lucide-react";
+import { Bell, CheckCheck, ShoppingCart, Mail, Clock, Phone } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 
@@ -13,26 +13,60 @@ function Notifications() {
   useEffect(() => {
     if (!currentUser) return;
 
-    const recipients = isAdmin ? [currentUser.uid, "ADMIN_GROUP"] : [currentUser.uid];
-    const q = query(
+    let unsubUser = () => {};
+    let unsubAdmin = () => {};
+    let userNotifs = [];
+    let adminNotifs = [];
+
+    const updateNotifs = () => {
+      const allNotifs = [...userNotifs, ...adminNotifs];
+      allNotifs.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis() || Date.now();
+        const timeB = b.createdAt?.toMillis() || Date.now();
+        return timeB - timeA;
+      });
+      setNotifications(allNotifs);
+      setLoading(false);
+    };
+
+    const qUser = query(
       collection(db, "notifications"),
-      where("recipientId", "in", recipients),
+      where("recipientId", "==", currentUser.uid),
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
+    unsubUser = onSnapshot(qUser, (snapshot) => {
+      userNotifs = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setNotifications(data);
-      setLoading(false);
+      updateNotifs();
     }, (error) => {
-      console.error("Notifications listener error:", error);
-      setLoading(false);
+      console.error("User Notifications listener error:", error);
+      if (!isAdmin) setLoading(false);
     });
 
-    return () => unsubscribe();
+    if (isAdmin) {
+      const qAdmin = query(
+        collection(db, "notifications"),
+        where("recipientId", "==", "ADMIN_GROUP"),
+        orderBy("createdAt", "desc")
+      );
+      unsubAdmin = onSnapshot(qAdmin, (snapshot) => {
+        adminNotifs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        updateNotifs();
+      }, (error) => {
+        console.error("Admin Notifications listener error:", error);
+      });
+    }
+
+    return () => {
+      unsubUser();
+      if (isAdmin) unsubAdmin();
+    };
   }, [currentUser, isAdmin]);
 
   async function markAsRead(notifId) {
@@ -195,10 +229,10 @@ function Notifications() {
                 {notif.type === "reservation_admin" ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "var(--space-lg)", marginTop: "var(--space-sm)", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }} title="Buyer Email">
-                      <span style={{ fontWeight: 600 }}>B:</span> <Mail size={13} /> {notif.buyerEmail}
+                      <span style={{ fontWeight: 600 }}>B:</span> <Mail size={13} /> {notif.buyerEmail} <Phone size={13} style={{ marginLeft: "4px" }} /> {notif.buyerPhone || "N/A"}
                     </span>
                     <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }} title="Seller Email">
-                      <span style={{ fontWeight: 600 }}>S:</span> <Mail size={13} /> {notif.sellerEmail}
+                      <span style={{ fontWeight: 600 }}>S:</span> <Mail size={13} /> {notif.sellerEmail} <Phone size={13} style={{ marginLeft: "4px" }} /> {notif.sellerPhone || "N/A"}
                     </span>
                     <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }}>
                       ₹{notif.itemPrice}

@@ -1,22 +1,25 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { 
-  signOut, 
+import {
+  signOut,
   onAuthStateChanged,
   updateProfile,
   deleteUser,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
-  signInWithEmailLink
+  signInWithEmailLink,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updatePassword
 } from "firebase/auth";
 import { auth, db, storage } from "../firebase";
-import { doc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import toast from "react-hot-toast";
 
 const AuthContext = createContext();
 
 // Add your admin emails here
-const ADMIN_EMAILS = ["admin@iitd.ac.in", "cmaya@iitd.ac.in"];
+const ADMIN_EMAILS = ["mayank@iitd.ac.in", "admin@iitd.ac.in"];
 
 export function useAuth() {
   return useContext(AuthContext);
@@ -24,6 +27,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +75,7 @@ export function AuthProvider({ children }) {
 
   async function deleteAccount() {
     if (!currentUser) return { success: false, error: "No active user" };
-    
+
     // 1. Delete Firestore user document (Best effort)
     try {
       const userDocRef = doc(db, "users", currentUser.uid);
@@ -79,7 +83,7 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.warn("Could not delete Firestore doc (likely security rules):", e);
     }
-    
+
     // 2. Delete Profile Photo from Storage (Best effort)
     try {
       const photoRef = ref(storage, `avatars/${currentUser.uid}`);
@@ -91,7 +95,7 @@ export function AuthProvider({ children }) {
     // 3. Delete Auth Account
     try {
       await deleteUser(currentUser);
-      
+
       toast.success("Account deleted successfully. We're sorry to see you go!");
       return { success: true };
     } catch (error) {
@@ -107,38 +111,103 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function registerWithPassword(email, password, name) {
+    if (!email.endsWith("@iitd.ac.in")) {
+      return { success: false, error: "not-iitd" };
+    }
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(result.user, { displayName: name });
+      return { success: true, user: result.user };
+    } catch (error) {
+      console.error("Registration error:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function loginWithPassword(email, password) {
+    if (!email.endsWith("@iitd.ac.in")) {
+      return { success: false, error: "not-iitd" };
+    }
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return { success: true, user: result.user };
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function changeUserPassword(newPassword) {
+    if (!currentUser) return { success: false, error: "No user" };
+    try {
+      await updatePassword(currentUser, newPassword);
+      toast.success("Password updated successfully!");
+      return { success: true };
+    } catch (error) {
+      console.error("Password update error:", error);
+      if (error.code === 'auth/requires-recent-login') {
+        toast.error("Please log in again to change your password.");
+        await signOut(auth);
+        return { success: false, forceLogout: true };
+      }
+      toast.error(error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
   useEffect(() => {
+    let unsubUserDoc = null;
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       // Validate IITD domain & verification state dynamically
       if (user) {
         if (!user.email.endsWith("@iitd.ac.in")) {
           signOut(auth);
           setCurrentUser(null);
-        // } else if (!user.emailVerified) {
-        //   // If they are cached as logged in but never verified
-        //   setCurrentUser(null);
+          setUserData(null);
+          // } else if (!user.emailVerified) {
+          //   // If they are cached as logged in but never verified
+          //   setCurrentUser(null);
         } else {
           setCurrentUser(user);
-          setIsAdmin(ADMIN_EMAILS.includes(user.email));
+          setIsAdmin(ADMIN_EMAILS.includes(user.email?.toLowerCase()));
+
+          unsubUserDoc = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+            if (docSnap.exists()) {
+              setUserData(docSnap.data());
+            } else {
+              setUserData(null);
+            }
+          });
         }
       } else {
         setCurrentUser(null);
         setIsAdmin(false);
+        setUserData(null);
+        if (unsubUserDoc) unsubUserDoc();
       }
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (unsubUserDoc) unsubUserDoc();
+    };
   }, []);
 
 
 
   const value = {
     currentUser,
+    userData,
     isAdmin,
     sendMagicLink,
     verifyMagicLink,
     isMagicLink,
+    registerWithPassword,
+    loginWithPassword,
+    changeUserPassword,
     logout,
     deleteAccount,
     loading

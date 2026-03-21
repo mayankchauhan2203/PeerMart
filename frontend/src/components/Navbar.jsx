@@ -29,20 +29,46 @@ function Navbar() {
       return;
     }
 
-    const recipients = isAdmin ? [currentUser.uid, "ADMIN_GROUP"] : [currentUser.uid];
-    const q = query(
+    let unsubUser = () => {};
+    let unsubAdmin = () => {};
+    let userCount = 0;
+    let adminCount = 0;
+
+    const updateUnread = () => {
+      setUnreadCount(userCount + adminCount);
+    };
+
+    const qUser = query(
       collection(db, "notifications"),
-      where("recipientId", "in", recipients),
+      where("recipientId", "==", currentUser.uid),
       where("read", "==", false)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setUnreadCount(snapshot.size);
+    unsubUser = onSnapshot(qUser, (snapshot) => {
+      userCount = snapshot.size;
+      updateUnread();
     }, (error) => {
       console.error("Notification count listener error:", error);
     });
 
-    return () => unsubscribe();
+    if (isAdmin) {
+      const qAdmin = query(
+        collection(db, "notifications"),
+        where("recipientId", "==", "ADMIN_GROUP"),
+        where("read", "==", false)
+      );
+      unsubAdmin = onSnapshot(qAdmin, (snapshot) => {
+        adminCount = snapshot.size;
+        updateUnread();
+      }, (error) => {
+        console.error("Admin Notification count listener error:", error);
+      });
+    }
+
+    return () => {
+      unsubUser();
+      if (isAdmin) unsubAdmin();
+    };
   }, [currentUser, isAdmin]);
 
   const isActive = (path) => location.pathname === path;

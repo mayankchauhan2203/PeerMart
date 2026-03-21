@@ -1,7 +1,7 @@
-import { collection, getDocs, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Package, PlusCircle, CheckCircle, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -9,7 +9,8 @@ import { useAuth } from "../context/AuthContext";
 const CATEGORIES = ["All", "Electronics", "Books", "Furniture", "Clothing", "Sports", "Other"];
 
 function Marketplace() {
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
+  const navigate = useNavigate(); // we need to import useNavigate and use it to redirect
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +36,12 @@ function Marketplace() {
   }
 
   async function reserveItem(item) {
+    if (!userData?.phone) {
+      toast.error("Please add your phone number in Profile before reserving an item.");
+      navigate("/profile");
+      return;
+    }
+
     try {
       const itemRef = doc(db, "items", item.id);
       await updateDoc(itemRef, {
@@ -43,6 +50,17 @@ function Marketplace() {
         reservedByName: currentUser.displayName || "IITD Student",
         reservedByEmail: currentUser.email,
       });
+
+      // Fetch seller's up-to-date phone number
+      let sellerPhone = "Unknown";
+      try {
+        const sellerDocSnap = await getDoc(doc(db, "users", item.sellerId));
+        if (sellerDocSnap.exists()) {
+          sellerPhone = sellerDocSnap.data().phone || "Unknown";
+        }
+      } catch (e) {
+        console.error("Failed to fetch seller phone", e);
+      }
 
       // 1. Create ANONYMOUS notification for the seller
       await addDoc(collection(db, "notifications"), {
@@ -65,8 +83,10 @@ function Marketplace() {
         itemPrice: item.price,
         sellerName: item.sellerName || "Unknown Seller",
         sellerEmail: item.sellerEmail || "Unknown Email",
+        sellerPhone: sellerPhone,
         buyerName: currentUser.displayName || "IITD Student",
         buyerEmail: currentUser.email,
+        buyerPhone: userData.phone,
         read: false,
         createdAt: serverTimestamp(),
       });
