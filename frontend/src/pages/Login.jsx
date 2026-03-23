@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { updateProfile } from "firebase/auth";
 
 function Login() {
-  const { sendMagicLink, verifyMagicLink, isMagicLink, currentUser, loginWithPassword, registerWithPassword } = useAuth();
+  const { sendMagicLink, verifyMagicLink, isMagicLink, currentUser, loginWithPassword, registerWithPassword, resetPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -52,6 +52,16 @@ function Login() {
     }
     */
   }, [isMagicLink, verifyMagicLink, navigate, location.state]);
+
+  async function handleForgotPassword() {
+    if (!email.endsWith("@iitd.ac.in")) {
+      toast.error("Please enter your @iitd.ac.in email address first.");
+      return;
+    }
+    setLoading(true);
+    await resetPassword(email);
+    setLoading(false);
+  }
 
   // If already logged in, redirect away
   if (currentUser) {
@@ -164,7 +174,14 @@ function Login() {
           </div>
 
           <div className="form-group">
-            <label>Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label>Password</label>
+              {!isRegistering && (
+                <button type="button" onClick={handleForgotPassword} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}>
+                  Forgot Password?
+                </button>
+              )}
+            </div>
             <div className="input-with-icon">
               <Shield size={18} className="input-icon" />
               <input 

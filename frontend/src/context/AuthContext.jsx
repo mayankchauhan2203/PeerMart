@@ -9,7 +9,10 @@ import {
   signInWithEmailLink,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  updatePassword
+  updatePassword,
+  sendPasswordResetEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { doc, deleteDoc, onSnapshot } from "firebase/firestore";
@@ -132,20 +135,38 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function changeUserPassword(newPassword) {
+  async function resetPassword(email) {
+    if (!email) return { success: false, error: "Email required" };
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Password reset email sent! Check your inbox.");
+      return { success: true };
+    } catch (error) {
+      toast.error(error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async function changeUserPassword(oldPassword, newPassword) {
     if (!currentUser) return { success: false, error: "No user" };
     try {
+      // Re-authenticate user to fulfill the "recent login" requirement seamlessly
+      const credential = EmailAuthProvider.credential(currentUser.email, oldPassword);
+      await reauthenticateWithCredential(currentUser, credential);
+      
+      // Now update the password
       await updatePassword(currentUser, newPassword);
       toast.success("Password updated successfully!");
       return { success: true };
     } catch (error) {
       console.error("Password update error:", error);
-      if (error.code === 'auth/requires-recent-login') {
-        toast.error("Please log in again to change your password.");
-        await signOut(auth);
-        return { success: false, forceLogout: true };
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+        toast.error("Incorrect current password.");
+      } else if (error.code === 'auth/too-many-requests') {
+        toast.error("Too many failed attempts. Try again later.");
+      } else {
+        toast.error(error.message);
       }
-      toast.error(error.message);
       return { success: false, error: error.message };
     }
   }
@@ -202,6 +223,7 @@ export function AuthProvider({ children }) {
     registerWithPassword,
     loginWithPassword,
     changeUserPassword,
+    resetPassword,
     logout,
     deleteAccount,
     loading

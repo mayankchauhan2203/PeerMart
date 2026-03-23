@@ -2,16 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   User, Settings, Bell, Shield, ChevronRight, Package, Star, ShoppingBag,
-  LogOut, Edit3, Camera, Save, X, Phone, AlignLeft, Trash2
+  LogOut, Edit3, Camera, Save, X, Phone, AlignLeft, Trash2, Eye, EyeOff
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { db, storage } from "../firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, query, collection, where, getDocs } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import toast from "react-hot-toast";
 
 function Profile() {
-  const { currentUser, logout, deleteAccount, changeUserPassword, userData } = useAuth();
+  const { currentUser, logout, deleteAccount, changeUserPassword, userData, resetPassword } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -21,6 +21,11 @@ function Profile() {
   const [saving, setSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
 
   // Form State
   const [name, setName] = useState("");
@@ -28,6 +33,10 @@ function Profile() {
   const [bio, setBio] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  
+  // Real-time Stats
+  const [listingsCount, setListingsCount] = useState(0);
+  const [boughtCount, setBoughtCount] = useState(0);
 
   // Derived state
   const displayName = currentUser?.displayName || "Student User";
@@ -47,8 +56,19 @@ function Profile() {
           setPhone(data.phone || "");
           setBio(data.bio || "");
         }
-
+        
         setName(currentUser.displayName || "");
+
+        // Fetch user stats securely
+        const itemsRef = collection(db, "items");
+        const listingsQuery = query(itemsRef, where("sellerId", "==", currentUser.uid));
+        const listingsSnap = await getDocs(listingsQuery);
+        setListingsCount(listingsSnap.size);
+
+        const boughtQuery = query(itemsRef, where("reservedBy", "==", currentUser.uid));
+        const boughtSnap = await getDocs(boughtQuery);
+        setBoughtCount(boughtSnap.size);
+        
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -89,16 +109,30 @@ function Profile() {
   }
 
   async function submitPasswordChange() {
+    if (!oldPassword) {
+      toast.error("Please enter your current password.");
+      return;
+    }
     if (newPassword.length < 6) {
       toast.error("Password must be at least 6 characters.");
       return;
     }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to change your password?")) {
+      return;
+    }
+    
     setSaving(true);
-    const result = await changeUserPassword(newPassword);
+    const result = await changeUserPassword(oldPassword, newPassword);
     setSaving(false);
 
     if (result.success) {
+      setOldPassword("");
       setNewPassword("");
+      setConfirmPassword("");
       setShowPasswordForm(false);
     } else if (result.forceLogout) {
       navigate("/login");
@@ -293,18 +327,18 @@ function Profile() {
           </>
         )}
 
-        {/* Keeping stats for visuals */}
+        {/* Profile Statistics Block */}
         <div className="profile-stats" style={{ opacity: isEditing ? 0.5 : 1, pointerEvents: isEditing ? 'none' : 'auto' }}>
           <div className="profile-stat">
-            <h3>12</h3>
+            <h3>{listingsCount}</h3>
             <p>Listings</p>
           </div>
           <div className="profile-stat">
-            <h3>4.8</h3>
+            <h3>{userData?.rating ? Number(userData.rating).toFixed(1) : "New"}</h3>
             <p>Rating</p>
           </div>
           <div className="profile-stat">
-            <h3>8</h3>
+            <h3>{boughtCount}</h3>
             <p>Bought</p>
           </div>
         </div>
@@ -388,16 +422,67 @@ function Profile() {
 
             {showPasswordForm && (
               <div className="password-change-form" style={{ width: '100%', marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-subtle)' }}>
-                <div className="form-group edit-form-group" style={{ marginBottom: 'var(--space-md)' }}>
+                <div className="form-group edit-form-group" style={{ marginBottom: 'var(--space-md)', position: 'relative' }}>
+                  <label>Current Password</label>
+                  <input
+                    type={showOldPassword ? "text" : "password"}
+                    value={oldPassword}
+                    onChange={e => setOldPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', color: 'white', marginTop: 'var(--space-xs)', paddingRight: '40px' }}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    style={{ position: 'absolute', right: '10px', top: '36px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                  >
+                    {showOldPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => resetPassword(currentUser.email)}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', marginTop: '8px', padding: 0, textAlign: 'left' }}
+                  >
+                    Forgot current password? Send reset email
+                  </button>
+                </div>
+
+                <div className="form-group edit-form-group" style={{ marginBottom: 'var(--space-md)', position: 'relative' }}>
                   <label>New Password</label>
                   <input
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     placeholder="Enter new password (min. 6 characters)"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', color: 'white', marginTop: 'var(--space-xs)' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', color: 'white', marginTop: 'var(--space-xs)', paddingRight: '40px' }}
                   />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    style={{ position: 'absolute', right: '10px', top: '36px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                  >
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
+                
+                <div className="form-group edit-form-group" style={{ marginBottom: 'var(--space-md)', position: 'relative' }}>
+                  <label>Confirm Password</label>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', color: 'white', marginTop: 'var(--space-xs)', paddingRight: '40px' }}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{ position: 'absolute', right: '10px', top: '36px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+
                 <div className="edit-actions" style={{ justifyContent: 'flex-start', gap: 'var(--space-md)' }}>
                   <button className="btn-cancel" onClick={() => setShowPasswordForm(false)} disabled={saving} style={{ padding: '8px 16px', fontSize: '13px' }}>
                     Cancel

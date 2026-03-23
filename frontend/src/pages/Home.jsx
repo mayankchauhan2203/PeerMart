@@ -1,7 +1,51 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { ShoppingBag, Shield, Zap, Heart, ArrowRight, Star, Store } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 
 function Home() {
+  const [stats, setStats] = useState({ activeListings: 0, itemsTraded: 0, users: 0, loaded: false });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        let active = 0;
+        let tradedValue = 0;
+        
+        const itemsSnap = await getDocs(collection(db, "items"));
+        itemsSnap.forEach(doc => {
+          const data = doc.data();
+          if (data.status === "available") {
+            active++;
+          } else {
+            tradedValue += (Number(data.price) || 0);
+          }
+        });
+
+        const usersSnap = await getDocs(collection(db, "users"));
+        const usersCount = usersSnap.size;
+
+        setStats({
+          activeListings: active,
+          itemsTraded: tradedValue,
+          users: usersCount,
+          loaded: true
+        });
+      } catch (error) {
+        console.error("Error fetching homepage stats:", error);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  const formatCurrency = (val) => {
+    if (val === 0) return "₹0";
+    if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L+`;
+    if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K+`;
+    return `₹${val}`;
+  };
+
   return (
     <div>
       {/* Hero */}
@@ -43,15 +87,15 @@ function Home() {
 
           <div className="hero-stats">
             <div className="hero-stat">
-              <div className="hero-stat-value">500+</div>
+              <div className="hero-stat-value">{stats.loaded ? stats.activeListings : "..."}</div>
               <div className="hero-stat-label">Active Listings</div>
             </div>
             <div className="hero-stat">
-              <div className="hero-stat-value">1.2K</div>
+              <div className="hero-stat-value">{stats.loaded ? stats.users : "..."}</div>
               <div className="hero-stat-label">Happy Students</div>
             </div>
             <div className="hero-stat">
-              <div className="hero-stat-value">₹2L+</div>
+              <div className="hero-stat-value">{stats.loaded ? formatCurrency(stats.itemsTraded) : "..."}</div>
               <div className="hero-stat-label">Items Traded</div>
             </div>
           </div>
