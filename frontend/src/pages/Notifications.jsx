@@ -13,61 +13,26 @@ function Notifications() {
   useEffect(() => {
     if (!currentUser) return;
 
-    let unsubUser = () => {};
-    let unsubAdmin = () => {};
-    let userNotifs = [];
-    let adminNotifs = [];
-
-    const updateNotifs = () => {
-      const allNotifs = [...userNotifs, ...adminNotifs];
-      allNotifs.sort((a, b) => {
-        const timeA = a.createdAt?.toMillis() || Date.now();
-        const timeB = b.createdAt?.toMillis() || Date.now();
-        return timeB - timeA;
-      });
-      setNotifications(allNotifs);
-      setLoading(false);
-    };
-
     const qUser = query(
       collection(db, "notifications"),
       where("recipientId", "==", currentUser.uid),
       orderBy("createdAt", "desc")
     );
 
-    unsubUser = onSnapshot(qUser, (snapshot) => {
-      userNotifs = snapshot.docs.map((doc) => ({
+    const unsubUser = onSnapshot(qUser, (snapshot) => {
+      const userNotifs = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      updateNotifs();
+      setNotifications(userNotifs);
+      setLoading(false);
     }, (error) => {
       console.error("User Notifications listener error:", error);
-      if (!isAdmin) setLoading(false);
+      setLoading(false);
     });
 
-    if (isAdmin) {
-      const qAdmin = query(
-        collection(db, "notifications"),
-        where("recipientId", "==", "ADMIN_GROUP"),
-        orderBy("createdAt", "desc")
-      );
-      unsubAdmin = onSnapshot(qAdmin, (snapshot) => {
-        adminNotifs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        updateNotifs();
-      }, (error) => {
-        console.error("Admin Notifications listener error:", error);
-      });
-    }
-
-    return () => {
-      unsubUser();
-      if (isAdmin) unsubAdmin();
-    };
-  }, [currentUser, isAdmin]);
+    return () => unsubUser();
+  }, [currentUser]);
 
   async function markAsRead(notifId) {
     try {
@@ -199,20 +164,11 @@ function Notifications() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-md)" }}>
                   <p style={{ margin: 0, fontWeight: notif.read ? 400 : 600, color: "var(--text-primary)", fontSize: "var(--font-base)" }}>
-                    {notif.type === "reservation_admin" ? (
-                      <>
-                        <span style={{ color: "var(--warning)", fontWeight: 700 }}>[ADMIN]</span>{" "}
-                        <strong>{notif.buyerName}</strong> wants to buy{" "}
-                        <strong style={{ color: "var(--accent-primary)" }}>"{notif.itemTitle}"</strong>{" "}
-                        from <strong>{notif.sellerName}</strong>
-                      </>
-                    ) : (
                       <>
                         Someone has reserved your item{" "}
                         <strong style={{ color: "var(--accent-primary)" }}>"{notif.itemTitle}"</strong>.{" "}
                         The admin will contact you shortly.
                       </>
-                    )}
                   </p>
                   {!notif.read && (
                     <span style={{
@@ -226,33 +182,15 @@ function Notifications() {
                   )}
                 </div>
 
-                {notif.type === "reservation_admin" ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-lg)", marginTop: "var(--space-sm)", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }} title="Buyer Email">
-                      <span style={{ fontWeight: 600 }}>B:</span> <Mail size={13} /> {notif.buyerEmail} <Phone size={13} style={{ marginLeft: "4px" }} /> {notif.buyerPhone || "N/A"}
-                    </span>
-                    <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }} title="Seller Email">
-                      <span style={{ fontWeight: 600 }}>S:</span> <Mail size={13} /> {notif.sellerEmail} <Phone size={13} style={{ marginLeft: "4px" }} /> {notif.sellerPhone || "N/A"}
-                    </span>
-                    <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      ₹{notif.itemPrice}
-                    </span>
-                    <span style={{ fontSize: "var(--font-sm)", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <Clock size={13} />
-                      {timeAgo(notif.createdAt)}
-                    </span>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-lg)", marginTop: "var(--space-sm)", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      ₹{notif.itemPrice}
-                    </span>
-                    <span style={{ fontSize: "var(--font-sm)", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <Clock size={13} />
-                      {timeAgo(notif.createdAt)}
-                    </span>
-                  </div>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-lg)", marginTop: "var(--space-sm)", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "var(--font-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }}>
+                    ₹{notif.itemPrice}
+                  </span>
+                  <span style={{ fontSize: "var(--font-sm)", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <Clock size={13} />
+                    {timeAgo(notif.createdAt)}
+                  </span>
+                </div>
 
                 {!notif.read && (
                   <button

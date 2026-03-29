@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ShoppingBag, Home, Store, PlusCircle, User, LogIn, Bell } from "lucide-react";
+import { ShoppingBag, Home, Store, PlusCircle, User, LogIn, Bell, Shield } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
@@ -29,47 +29,20 @@ function Navbar() {
       return;
     }
 
-    let unsubUser = () => {};
-    let unsubAdmin = () => {};
-    let userCount = 0;
-    let adminCount = 0;
-
-    const updateUnread = () => {
-      setUnreadCount(userCount + adminCount);
-    };
-
     const qUser = query(
       collection(db, "notifications"),
       where("recipientId", "==", currentUser.uid),
       where("read", "==", false)
     );
 
-    unsubUser = onSnapshot(qUser, (snapshot) => {
-      userCount = snapshot.size;
-      updateUnread();
+    const unsubUser = onSnapshot(qUser, (snapshot) => {
+      setUnreadCount(snapshot.size);
     }, (error) => {
       console.error("Notification count listener error:", error);
     });
 
-    if (isAdmin) {
-      const qAdmin = query(
-        collection(db, "notifications"),
-        where("recipientId", "==", "ADMIN_GROUP"),
-        where("read", "==", false)
-      );
-      unsubAdmin = onSnapshot(qAdmin, (snapshot) => {
-        adminCount = snapshot.size;
-        updateUnread();
-      }, (error) => {
-        console.error("Admin Notification count listener error:", error);
-      });
-    }
-
-    return () => {
-      unsubUser();
-      if (isAdmin) unsubAdmin();
-    };
-  }, [currentUser, isAdmin]);
+    return () => unsubUser();
+  }, [currentUser]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -95,6 +68,12 @@ function Navbar() {
           
           {currentUser ? (
             <>
+              {isAdmin && (
+                <Link to="/admin-dashboard" className={`nav-link ${isActive("/admin-dashboard") ? "active" : ""}`}>
+                  <Shield size={16} />
+                  Admin
+                </Link>
+              )}
               <Link to="/post-item" className={`nav-link ${isActive("/post-item") ? "active" : ""}`}>
                 <PlusCircle size={16} />
                 Sell
@@ -152,6 +131,12 @@ function Navbar() {
         </Link>
         {currentUser ? (
           <>
+            {isAdmin && (
+              <Link to="/admin-dashboard" className={`nav-link ${isActive("/admin-dashboard") ? "active" : ""}`}>
+                <Shield size={20} />
+                Admin Panel
+              </Link>
+            )}
             <Link to="/post-item" className={`nav-link ${isActive("/post-item") ? "active" : ""}`}>
               <PlusCircle size={20} />
               Sell Item

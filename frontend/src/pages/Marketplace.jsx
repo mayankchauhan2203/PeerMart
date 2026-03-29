@@ -74,24 +74,7 @@ function Marketplace() {
         createdAt: serverTimestamp(),
       });
 
-      // 2. Create DETAILED notification for the Admin Meditator
-      await addDoc(collection(db, "notifications"), {
-        recipientId: "ADMIN_GROUP",
-        type: "reservation_admin",
-        itemId: item.id,
-        itemTitle: item.title,
-        itemPrice: item.price,
-        sellerName: item.sellerName || "Unknown Seller",
-        sellerEmail: item.sellerEmail || "Unknown Email",
-        sellerPhone: sellerPhone,
-        buyerName: currentUser.displayName || "IITD Student",
-        buyerEmail: currentUser.email,
-        buyerPhone: userData.phone,
-        read: false,
-        createdAt: serverTimestamp(),
-      });
-
-      // 3. Send actual Email to the seller (Requires Firebase Trigger Email Extension - Blaze Plan)
+      // 2. Send actual Email to the seller (Requires Firebase Trigger Email Extension - Blaze Plan)
       /*
       await addDoc(collection(db, "mail"), {
         to: [item.sellerEmail],

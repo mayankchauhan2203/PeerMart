@@ -8,6 +8,7 @@ import Profile from "./pages/Profile.jsx";
 import MyListings from "./pages/MyListings.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Login from "./pages/Login.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -55,6 +56,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/admin-dashboard" element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
             <Route path="/marketplace" element={
               <ProtectedRoute>
                 <Marketplace />
