@@ -185,8 +185,8 @@ function AdminDashboard() {
                   onClick={() => handleMarkComplete(order.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'var(--accent-primary)', color: 'var(--bg-card)',
-                    border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500'
+                    background: 'var(--accent-primary)', color: '#1a1a1a',
+                    border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600'
                   }}
                 >
                   <CheckCircle size={16} /> Mark as Complete
