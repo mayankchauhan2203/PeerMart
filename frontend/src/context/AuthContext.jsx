@@ -21,7 +21,7 @@ import toast from "react-hot-toast";
 const AuthContext = createContext();
 
 // Add your admin emails here
-const ADMIN_EMAILS = ["mayank@iitd.ac.in", "admin@iitd.ac.in"];
+const ADMIN_EMAILS = ["mayank@iitd.ac.in", "admin@iitd.ac.in", "pushkin@iitd.ac.in"];
 
 export function useAuth() {
   return useContext(AuthContext);
