@@ -73,18 +73,15 @@ function Home() {
             </Link>
           </div>
 
-          <div className="hero-recent-items" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', gap: 'var(--space-md)', animation: 'fadeInUp 0.8s ease-out 0.6s both', maxWidth: '1000px', width: '100%', margin: 'var(--space-3xl) auto 0 auto', paddingBottom: '16px', scrollbarWidth: 'thin' }}>
+          <div className="hero-recent-items">
             {recentItems.length > 0 ? (
                recentItems.map(item => (
                  <div 
                    key={item.id} 
                    className="recent-item-card" 
                    onClick={() => navigate('/marketplace')}
-                   style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-md)', border: '1px solid var(--border-subtle)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '12px', transition: 'transform 0.2s, box-shadow 0.2s', textAlign: 'left', flex: '0 0 180px' }}
-                   onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.borderColor = 'var(--border-accent)'; }}
-                   onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
                  >
-                   <div style={{ width: '100%', height: '120px', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                   <div className="recent-item-image">
                      {item.image ? (
                        <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                      ) : (
