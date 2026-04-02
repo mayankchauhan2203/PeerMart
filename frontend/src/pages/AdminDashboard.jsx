@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteField, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { Shield, Package, Phone, Mail, User, XCircle, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
@@ -8,11 +8,11 @@ function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  async function handleUnreserve(orderId) {
+  async function handleUnreserve(order) {
     if (!window.confirm("Are you sure you want to cancel this reservation? The item will be made available to everyone again.")) return;
     
     try {
-      const itemRef = doc(db, "items", orderId);
+      const itemRef = doc(db, "items", order.id);
       await updateDoc(itemRef, {
         status: "available",
         reservedBy: deleteField(),
@@ -20,7 +20,19 @@ function AdminDashboard() {
         reservedByEmail: deleteField()
       });
       
-      setOrders(prev => prev.filter(o => o.id !== orderId));
+      if (order.sellerId) {
+        await addDoc(collection(db, "notifications"), {
+          recipientId: order.sellerId,
+          type: "item_unreserved",
+          itemId: order.id,
+          itemTitle: order.title,
+          itemPrice: order.price,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      setOrders(prev => prev.filter(o => o.id !== order.id));
       toast.success("Reservation cancelled successfully");
     } catch (error) {
       console.error("Error unreserving item:", error);
@@ -172,7 +184,7 @@ function AdminDashboard() {
               {/* Actions Footer */}
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button
-                  onClick={() => handleUnreserve(order.id)}
+                  onClick={() => handleUnreserve(order)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
                     background: 'rgba(248, 113, 113, 0.1)', color: 'var(--danger)',

@@ -164,11 +164,17 @@ function Notifications() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-md)" }}>
                   <p style={{ margin: 0, fontWeight: notif.read ? 400 : 600, color: "var(--text-primary)", fontSize: "var(--font-base)" }}>
+                    {notif.type === "item_unreserved" ? (
+                      <>
+                        Your item <strong style={{ color: "var(--accent-primary)" }}>"{notif.itemTitle}"</strong> has been unreserved and is available in the marketplace again.
+                      </>
+                    ) : (
                       <>
                         Someone has reserved your item{" "}
                         <strong style={{ color: "var(--accent-primary)" }}>"{notif.itemTitle}"</strong>.{" "}
                         The admin will contact you shortly.
                       </>
+                    )}
                   </p>
                   {!notif.read && (
                     <span style={{
