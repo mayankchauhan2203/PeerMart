@@ -10,7 +10,6 @@ function AdminDashboard() {
 
   async function handleUnreserve(order) {
     if (!window.confirm("Are you sure you want to cancel this reservation? The item will be made available to everyone again.")) return;
-    
     try {
       const itemRef = doc(db, "items", order.id);
       await updateDoc(itemRef, {
@@ -19,7 +18,6 @@ function AdminDashboard() {
         reservedByName: deleteField(),
         reservedByEmail: deleteField()
       });
-      
       if (order.sellerId) {
         await addDoc(collection(db, "notifications"), {
           recipientId: order.sellerId,
@@ -31,7 +29,6 @@ function AdminDashboard() {
           createdAt: serverTimestamp(),
         });
       }
-
       setOrders(prev => prev.filter(o => o.id !== order.id));
       toast.success("Reservation cancelled successfully");
     } catch (error) {
@@ -42,13 +39,9 @@ function AdminDashboard() {
 
   async function handleMarkComplete(orderId) {
     if (!window.confirm("Are you sure you want to mark this transaction as complete? This will finalize the sale and remove the item from the marketplace.")) return;
-    
     try {
       const itemRef = doc(db, "items", orderId);
-      await updateDoc(itemRef, {
-        status: "sold"
-      });
-      
+      await updateDoc(itemRef, { status: "sold" });
       setOrders(prev => prev.filter(o => o.id !== orderId));
       toast.success("Transaction marked as complete!");
     } catch (error) {
@@ -67,34 +60,24 @@ function AdminDashboard() {
 
         const ordersData = await Promise.all(snapshot.docs.map(async (itemDoc) => {
           const item = { id: itemDoc.id, ...itemDoc.data() };
-          
-          // Fetch Seller Details
+
           let sellerPhone = "N/A";
           if (item.sellerId) {
             try {
               const sellerSnap = await getDoc(doc(db, "users", item.sellerId));
               if (sellerSnap.exists()) sellerPhone = sellerSnap.data().phone || "No phone";
-            } catch (e) {
-              console.error(e);
-            }
+            } catch (e) { console.error(e); }
           }
 
-          // Fetch Buyer Details
           let buyerPhone = "N/A";
           if (item.reservedBy) {
             try {
               const buyerSnap = await getDoc(doc(db, "users", item.reservedBy));
               if (buyerSnap.exists()) buyerPhone = buyerSnap.data().phone || "No phone";
-            } catch (e) {
-              console.error(e);
-            }
+            } catch (e) { console.error(e); }
           }
 
-          return {
-            ...item,
-            sellerPhone,
-            buyerPhone
-          };
+          return { ...item, sellerPhone, buyerPhone };
         }));
 
         setOrders(ordersData);
@@ -104,24 +87,25 @@ function AdminDashboard() {
         setLoading(false);
       }
     }
-
     fetchOrders();
   }, []);
 
   return (
-    <div className="marketplace">
-      <div className="marketplace-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 'var(--space-xl)' }}>
-        <div style={{ background: 'var(--accent-gradient)', padding: '12px', borderRadius: '12px', display: 'flex' }}>
-          <Shield size={28} color="white" />
+    <div className="admin-dashboard">
+      {/* Header */}
+      <div className="admin-header">
+        <div className="admin-header-top">
+          <div className="admin-icon">
+            <Shield size={22} color="white" />
+          </div>
+          <h1 className="admin-title">Admin</h1>
         </div>
-        <div>
-          <h1 style={{ margin: 0 }}>Admin <span className="gradient-text">Dashboard</span></h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Mediate active transactions and view complete contact details</p>
-        </div>
+        <h2 className="admin-subtitle gradient-text">Dashboard</h2>
+        <p className="admin-desc">Mediate active transactions and view complete contact details</p>
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
           <div className="loading-spinner"></div>
         </div>
       ) : orders.length === 0 ? (
@@ -131,77 +115,51 @@ function AdminDashboard() {
           <p>There are no items currently awaiting mediation.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <div className="admin-orders-list">
           {orders.map(order => (
-            <div key={order.id} style={{ 
-              background: 'var(--bg-card)', 
-              borderRadius: '16px', 
-              border: '1px solid var(--border-subtle)',
-              padding: 'var(--space-lg)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: 'var(--space-lg)'
-            }}>
+            <div key={order.id} className="admin-order-card">
               {/* Item Info */}
-              <div>
-                <h3 style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px', marginBottom: '12px' }}>Item Details</h3>
-                <div style={{ display: 'flex', gap: '16px' }}>
+              <div className="admin-order-section">
+                <h3 className="admin-section-heading">Item Details</h3>
+                <div className="admin-item-row">
                   {order.image ? (
-                    <img src={order.image} alt={order.title} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <img src={order.image} alt={order.title} className="admin-item-thumb" />
                   ) : (
-                    <div style={{ width: '80px', height: '80px', borderRadius: '8px', background: 'var(--bg-darker)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="admin-item-thumb-placeholder">
                       <Package size={24} color="var(--text-muted)" />
                     </div>
                   )}
                   <div>
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{order.title}</h4>
-                    <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>₹{order.price}</span>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Category: {order.category}</p>
+                    <h4 className="admin-item-title">{order.title}</h4>
+                    <span className="admin-item-price">₹{order.price}</span>
+                    <p className="admin-item-category">Category: {order.category}</p>
                   </div>
                 </div>
               </div>
 
               {/* Seller Info */}
-              <div>
-                <h3 style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <User size={16} /> Seller (Owner)
-                </h3>
-                <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}><strong>{order.sellerName || "Unknown"}</strong></p>
-                <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}><Mail size={14} /> {order.sellerEmail || "N/A"}</p>
-                <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}><Phone size={14} /> {order.sellerPhone}</p>
+              <div className="admin-order-section">
+                <h3 className="admin-section-heading"><User size={15} /> Seller (Owner)</h3>
+                <p className="admin-contact-name">{order.sellerName || "Unknown"}</p>
+                <p className="admin-contact-detail"><Mail size={13} /> {order.sellerEmail || "N/A"}</p>
+                <p className="admin-contact-detail"><Phone size={13} /> {order.sellerPhone}</p>
               </div>
 
               {/* Buyer Info */}
-              <div>
-                <h3 style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <User size={16} color="var(--accent)" /> Buyer (Reserved By)
-                </h3>
-                <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}><strong>{order.reservedByName || "Unknown"}</strong></p>
-                <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}><Mail size={14} /> {order.reservedByEmail || "N/A"}</p>
-                <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}><Phone size={14} /> {order.buyerPhone}</p>
+              <div className="admin-order-section">
+                <h3 className="admin-section-heading"><User size={15} /> Buyer (Reserved By)</h3>
+                <p className="admin-contact-name">{order.reservedByName || "Unknown"}</p>
+                <p className="admin-contact-detail"><Mail size={13} /> {order.reservedByEmail || "N/A"}</p>
+                <p className="admin-contact-detail"><Phone size={13} /> {order.buyerPhone}</p>
               </div>
 
-              {/* Actions Footer */}
-              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button
-                  onClick={() => handleUnreserve(order)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'rgba(248, 113, 113, 0.1)', color: 'var(--danger)',
-                    border: '1px solid rgba(248, 113, 113, 0.2)', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500'
-                  }}
-                >
-                  <XCircle size={16} /> Cancel & Unreserve
+              {/* Actions */}
+              <div className="admin-order-actions">
+                <button className="admin-btn-cancel" onClick={() => handleUnreserve(order)}>
+                  <XCircle size={15} /> Cancel &amp; Unreserve
                 </button>
-                <button
-                  onClick={() => handleMarkComplete(order.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'var(--accent-primary)', color: '#1a1a1a',
-                    border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600'
-                  }}
-                >
-                  <CheckCircle size={16} /> Mark as Complete
+                <button className="admin-btn-complete" onClick={() => handleMarkComplete(order.id)}>
+                  <CheckCircle size={15} /> Mark as Complete
                 </button>
               </div>
             </div>

@@ -2017,3 +2017,218 @@ html, body {
     width: 100%;
   }
 }
+
+/* ===== ADMIN DASHBOARD ===== */
+.admin-dashboard {
+  padding: 80px var(--space-xl) var(--space-4xl);
+  max-width: 1000px;
+  margin: 0 auto;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.admin-header {
+  margin-bottom: var(--space-2xl);
+}
+
+.admin-header-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: 4px;
+}
+
+.admin-icon {
+  background: var(--accent-gradient);
+  padding: 10px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-title {
+  margin: 0;
+  font-size: var(--font-3xl);
+  font-weight: 800;
+}
+
+.admin-subtitle {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-4xl);
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.admin-desc {
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+  margin: 0;
+}
+
+.admin-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.admin-order-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.admin-order-section {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-md);
+}
+
+.admin-order-section:last-of-type {
+  border-bottom: none;
+}
+
+.admin-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-md) 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-item-row {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+
+.admin-item-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.admin-item-thumb-placeholder {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-item-title {
+  margin: 0 0 4px 0;
+  font-size: var(--font-lg);
+  font-weight: 600;
+}
+
+.admin-item-price {
+  color: var(--accent-primary);
+  font-weight: 700;
+  font-size: var(--font-base);
+}
+
+.admin-item-category {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin: 6px 0 0 0;
+}
+
+.admin-contact-name {
+  font-weight: 600;
+  font-size: var(--font-base);
+  margin: 0 0 4px 0;
+}
+
+.admin-contact-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  margin: 4px 0;
+}
+
+.admin-order-actions {
+  display: flex;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.admin-btn-cancel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.admin-btn-cancel:hover {
+  background: rgba(248, 113, 113, 0.2);
+}
+
+.admin-btn-complete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: var(--accent-gradient);
+  color: #1a1a1a;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.admin-btn-complete:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 80px var(--space-md) var(--space-2xl);
+  }
+
+  .admin-subtitle {
+    font-size: var(--font-3xl);
+  }
+
+  .admin-order-actions {
+    flex-direction: column;
+  }
+
+  .admin-btn-cancel,
+  .admin-btn-complete {
+    width: 100%;
+  }
+}
