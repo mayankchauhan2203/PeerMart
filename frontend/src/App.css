@@ -420,9 +420,13 @@
   max-width: 100%;
   width: 100%;
   margin: var(--space-3xl) auto 0 auto;
-  padding-bottom: 16px;
-  scrollbar-width: thin;
+  padding-bottom: 4px;
+  scrollbar-width: none; /* Firefox */
   -webkit-overflow-scrolling: touch;
+}
+
+.hero-recent-items::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .recent-item-card {
@@ -1996,6 +2000,23 @@ html, body {
     flex-wrap: wrap;
     gap: var(--space-xl);
     justify-content: center;
+  }
+
+  .profile {
+    padding: 80px var(--space-md) var(--space-xl);
+  }
+
+  .profile-card {
+    padding: var(--space-lg);
+    padding-top: var(--space-lg);
+  }
+
+  .settings-section {
+    gap: var(--space-sm);
+  }
+
+  .setting-item {
+    padding: var(--space-md);
   }
 
   .section-title {
