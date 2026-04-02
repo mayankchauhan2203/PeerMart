@@ -1299,6 +1299,8 @@
   border: 1px solid var(--border-subtle);
   text-align: center;
   margin-bottom: var(--space-2xl);
+  /* ensure the avatar has room next to the absolute button on desktop */
+  padding-top: calc(var(--space-2xl) + 8px);
 }
 
 .profile-avatar {
@@ -1353,6 +1355,24 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: var(--space-xs);
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.settings-section h3 {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
 }
 
 .profile-section {
@@ -1627,6 +1647,17 @@
 .edit-profile-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
+}
+
+/* On mobile, pull the button out of absolute flow to prevent avatar overlap */
+@media (max-width: 480px) {
+  .edit-profile-btn {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin: 0 auto var(--space-md) auto;
+    width: fit-content;
+  }
 }
 
 .profile-avatar.editable {
