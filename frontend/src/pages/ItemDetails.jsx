@@ -68,7 +68,6 @@ function ItemDetails() {
         reservedByEmail: currentUser.email,
       });
 
-      // Anonymous notification for seller
       await addDoc(collection(db, "notifications"), {
         recipientId: item.sellerId,
         type: "reservation_anonymous",
@@ -80,7 +79,6 @@ function ItemDetails() {
       });
 
       toast.success("Item reserved successfully!");
-      // Update local state to reflect reservation
       setItem(prev => ({ ...prev, status: "reserved" }));
       setShowReserveModal(false);
     } catch (error) {
@@ -100,65 +98,57 @@ function ItemDetails() {
   if (!item) return null;
 
   return (
-    <div className="marketplace" style={{ maxWidth: "1000px", margin: "0 auto", padding: "var(--space-xl) var(--space-md)" }}>
+    <div className="item-details-page">
       {/* Back Button */}
-      <button 
-        onClick={() => navigate(-1)} 
-        style={{ display: "flex", alignItems: "center", gap: "8px", background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "16px", marginBottom: "var(--space-lg)", padding: 0 }}
-      >
+      <button onClick={() => navigate(-1)} className="item-details-back">
         <ArrowLeft size={20} /> Back to Marketplace
       </button>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "var(--space-xl)", background: "var(--bg-card)", padding: "var(--space-xl)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border-subtle)" }}>
+      <div className="item-details-grid">
         
-        {/* Image Card */}
-        <div style={{ width: "100%", height: "400px", background: "var(--bg-dark)", borderRadius: "var(--radius-md)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+        {/* Image */}
+        <div className="item-details-image-wrap">
           {item.image ? (
-            <img src={item.image} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={item.image} alt={item.title} className="item-details-img" />
           ) : (
-            <Package size={80} color="var(--text-muted)" />
+            <Package size={64} color="var(--text-muted)" />
           )}
-          <span className={`product-card-badge ${item.status === "available" ? "badge-available" : "badge-reserved"}`} style={{ position: "absolute", top: "16px", right: "16px" }}>
+          <span className={`product-card-badge ${item.status === "available" ? "badge-available" : "badge-reserved"}`}>
             {item.status === "available" ? "Available" : "Reserved"}
           </span>
         </div>
 
-        {/* Details Column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        {/* Details */}
+        <div className="item-details-info">
           <div>
-            <span style={{ fontSize: "14px", color: "var(--accent-primary)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" }}>
-              {item.category}
-            </span>
-            <h1 style={{ margin: "8px 0", fontSize: "2.5rem", lineHeight: "1.2" }}>{item.title}</h1>
-            <div style={{ fontSize: "2rem", color: "var(--text-primary)", fontWeight: "bold", margin: "16px 0" }}>
-              ₹{Math.round(item.price * 1.08)}
-            </div>
+            <span className="item-details-category">{item.category}</span>
+            <h1 className="item-details-title">{item.title}</h1>
+            <div className="item-details-price">₹{Math.round(item.price * 1.08)}</div>
           </div>
 
-          <div style={{ background: "var(--bg-darker)", padding: "var(--space-lg)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)", minHeight: "150px" }}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", color: "var(--text-secondary)", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px" }}>Description</h3>
-            <p style={{ margin: 0, color: "var(--text-primary)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+          <div className="item-details-description">
+            <h3 className="item-details-desc-heading">Description</h3>
+            <p className="item-details-desc-text">
               {item.description || "No description provided by the seller."}
             </p>
           </div>
 
-          <div style={{ marginTop: "auto", paddingTop: "var(--space-lg)" }}>
+          <div className="item-details-action">
             {item.sellerId === currentUser?.uid ? (
-              <button className="buy-btn" disabled style={{ width: "100%", padding: "16px", background: "var(--bg-darker)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", fontSize: "1.1rem" }}>
+              <button className="buy-btn item-details-btn" disabled>
                 <User size={20} />
                 This is your listing
               </button>
             ) : item.status === "available" ? (
               <button
-                className="btn btn-primary"
+                className="btn btn-primary item-details-btn"
                 onClick={handleReserveClick}
-                style={{ width: "100%", padding: "16px", fontSize: "1.1rem", display: "flex", justifyContent: "center", gap: "8px" }}
               >
                 <ShoppingCart size={20} />
                 Reserve Now
               </button>
             ) : (
-              <button className="buy-btn buy-btn-reserved" disabled style={{ width: "100%", padding: "16px", fontSize: "1.1rem" }}>
+              <button className="buy-btn buy-btn-reserved item-details-btn" disabled>
                 <CheckCircle size={20} />
                 Reserved
               </button>
@@ -169,38 +159,36 @@ function ItemDetails() {
 
       {/* Reservation Modal */}
       {showReserveModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'var(--bg-secondary)', padding: 'var(--space-xl)', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: '400px', border: '1px solid var(--border-subtle)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', color: 'var(--text-primary)' }}>Confirm Reservation</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px', lineHeight: '1.5' }}>Please provide your phone number and confirm to reserve this item.</p>
+        <div className="reserve-modal-overlay">
+          <div className="reserve-modal">
+            <h2 className="reserve-modal-title">Confirm Reservation</h2>
+            <p className="reserve-modal-subtitle">Please provide your phone number and confirm to reserve this item.</p>
             <form onSubmit={handleConfirmReserve}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Phone Number (10 digits)</label>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label>Phone Number (10 digits)</label>
                 <input 
                   type="tel" 
                   value={reservePhone} 
                   onChange={(e) => setReservePhone(e.target.value)}
-                  style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '16px' }}
                   placeholder="e.g. 9876543210"
                   required 
                 />
               </div>
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Type <strong style={{ color: 'var(--accent-primary)' }}>reserve</strong> to confirm</label>
+              <div className="form-group" style={{ marginBottom: '24px' }}>
+                <label>Type <strong style={{ color: 'var(--accent-primary)' }}>reserve</strong> to confirm</label>
                 <input 
                   type="text" 
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '16px' }}
                   placeholder="reserve"
                   required 
                 />
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" onClick={() => setShowReserveModal(false)} style={{ flex: 1, padding: '12px', borderRadius: 'var(--radius-md)', background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', cursor: 'pointer', fontSize: '16px', fontWeight: '500', transition: 'all 0.2s' }}>
+              <div className="edit-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowReserveModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" style={{ flex: 1, padding: '12px', borderRadius: 'var(--radius-md)', background: 'var(--accent-primary)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', transition: 'all 0.2s' }}>
+                <button type="submit" className="btn-save">
                   Confirm
                 </button>
               </div>
