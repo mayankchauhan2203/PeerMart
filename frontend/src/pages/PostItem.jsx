@@ -19,10 +19,15 @@ function PostItem() {
   const [loading, setLoading] = useState(false); // Added loading state
 
   const navigate = useNavigate();
-  const { currentUser, userData } = useAuth(); // Destructured currentUser and userData
+  const { currentUser, userData, isBlocked } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (isBlocked) {
+      toast.error("Your account has been blocked. Contact the admin.");
+      return;
+    }
 
     if (!userData?.phone) {
       toast.error("Please add your phone number in Profile before listing an item.");

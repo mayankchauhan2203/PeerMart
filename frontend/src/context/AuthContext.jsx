@@ -15,7 +15,7 @@ import {
   reauthenticateWithCredential
 } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { doc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { doc, deleteDoc, onSnapshot, setDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 
 const AuthContext = createContext();
@@ -115,6 +115,13 @@ export function AuthProvider({ children }) {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
+      // Create Firestore user doc so the admin Users tab can see this user
+      await setDoc(doc(db, "users", result.user.uid), {
+        name: name,
+        email: email,
+        uid: result.user.uid,
+        createdAt: new Date().toISOString(),
+      }, { merge: true });
       return { success: true, user: result.user };
     } catch (error) {
       console.error("Registration error:", error);
@@ -188,6 +195,14 @@ export function AuthProvider({ children }) {
           setCurrentUser(user);
           setIsAdmin(ADMIN_EMAILS.includes(user.email?.toLowerCase()));
 
+          // Upsert name + email so the admin Users tab always has current data.
+          // Only write name if displayName is set — avoids overwriting with ""
+          // when onAuthStateChanged fires before updateProfile completes.
+          const upsertData = { email: user.email || "", uid: user.uid };
+          if (user.displayName) upsertData.name = user.displayName;
+          setDoc(doc(db, "users", user.uid), upsertData, { merge: true })
+            .catch(e => console.warn("Could not upsert user doc:", e));
+
           unsubUserDoc = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
             if (docSnap.exists()) {
               setUserData(docSnap.data());
@@ -217,6 +232,7 @@ export function AuthProvider({ children }) {
     currentUser,
     userData,
     isAdmin,
+    isBlocked: !!userData?.blocked,
     sendMagicLink,
     verifyMagicLink,
     isMagicLink,
