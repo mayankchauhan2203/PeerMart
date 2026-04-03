@@ -28,20 +28,21 @@ function Footer() {
         <div className="footer-col">
           <h4>Categories</h4>
           <ul>
-            <li><Link to="/marketplace">Electronics</Link></li>
-            <li><Link to="/marketplace">Books</Link></li>
-            <li><Link to="/marketplace">Furniture</Link></li>
-            <li><Link to="/marketplace">Clothing</Link></li>
+            <li><Link to="/marketplace" state={{ category: "Electronics" }}>Electronics</Link></li>
+            <li><Link to="/marketplace" state={{ category: "Books" }}>Books</Link></li>
+            <li><Link to="/marketplace" state={{ category: "Furniture" }}>Furniture</Link></li>
+            <li><Link to="/marketplace" state={{ category: "Clothing" }}>Clothing</Link></li>
+            <li><Link to="/marketplace" state={{ category: "Sports" }}>Sports</Link></li>
           </ul>
         </div>
 
         <div className="footer-col">
           <h4>Support</h4>
           <ul>
-            <li><a href="#help">Help Center</a></li>
-            <li><a href="#safety">Safety Tips</a></li>
-            <li><a href="#terms">Terms of Service</a></li>
-            <li><a href="#privacy">Privacy Policy</a></li>
+            <li><Link to="/help">Help Center</Link></li>
+            <li><Link to="/safety">Safety Tips</Link></li>
+            <li><Link to="/terms">Terms of Service</Link></li>
+            <li><Link to="/privacy">Privacy Policy</Link></li>
           </ul>
         </div>
       </div>

@@ -10,6 +10,10 @@ import Notifications from "./pages/Notifications.jsx";
 import Login from "./pages/Login.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ItemDetails from "./pages/ItemDetails.jsx";
+import HelpCenter from "./pages/HelpCenter.jsx";
+import SafetyTips from "./pages/SafetyTips.jsx";
+import TermsOfService from "./pages/TermsOfService.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -92,6 +96,10 @@ function App() {
                   <Notifications />
                 </ProtectedRoute>
               } />
+              <Route path="/help" element={<HelpCenter />} />
+              <Route path="/safety" element={<SafetyTips />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
             </Routes>
           </main>
           <Footer />
