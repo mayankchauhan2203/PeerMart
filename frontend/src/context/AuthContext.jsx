@@ -23,9 +23,9 @@ function base64UrlEncode(array) {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [userData, setUserData]       = useState(null);
-  const [isAdmin, setIsAdmin]         = useState(false);
-  const [loading, setLoading]         = useState(true);
+  const [userData, setUserData] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // ── Initiate IITD OAuth 2.0 + PKCE flow ──────────────────────────────────
   async function loginWithIITD() {
@@ -113,8 +113,8 @@ export function AuthProvider({ children }) {
 
         // Keep a minimal Firestore doc in sync (uid always present)
         const upsertData = { uid: user.uid };
-        if (user.displayName) upsertData.name  = user.displayName;
-        if (user.email)       upsertData.email = user.email;
+        if (user.displayName) upsertData.name = user.displayName;
+        if (user.email) upsertData.email = user.email;
 
         setDoc(doc(db, "users", user.uid), upsertData, { merge: true }).catch(
           (e) => console.warn("Could not upsert user doc:", e)
@@ -152,7 +152,7 @@ export function AuthProvider({ children }) {
     currentUser,
     userData,
     isAdmin,
-    isBlocked:    !!userData?.blocked,
+    isBlocked: !!userData?.blocked,
     loginWithIITD,
     logout,
     deleteAccount,
