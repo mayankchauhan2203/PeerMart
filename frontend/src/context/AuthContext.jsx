@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
       // Passing scope as an empty string or omitting it entirely to avoid the generic IITD form crash
       // params.append("scope", "openid");
 
-      window.location.href = `https://oauth.iitd.ac.in/api/oauth/authorize?${params}`;
+      window.location.href = `https://auth.devclub.in/api/oauth/authorize?${params}`;
     } catch (err) {
       console.error("[loginWithIITD] Failed:", err);
       toast.error("Failed to start IITD login. Please try again.");
