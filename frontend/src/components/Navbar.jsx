@@ -112,16 +112,16 @@ function Navbar() {
               <Link to="/profile" className="nav-link nav-link-profile">
                 <div className="nav-avatar" style={{ overflow: 'hidden' }}>
                   {userData?.photoURL || currentUser.photoURL ? (
-                    <img 
-                      src={userData?.photoURL || currentUser.photoURL} 
-                      alt="Profile" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    <img
+                      src={userData?.photoURL || currentUser.photoURL}
+                      alt="Profile"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : "S"
+                    (userData?.name || currentUser.displayName || "S").charAt(0).toUpperCase()
                   )}
                 </div>
-                {currentUser.displayName?.split(" ")[0] || "Profile"}
+                {(userData?.name || currentUser.displayName)?.split(" ")[0] || "Profile"}
               </Link>
             </>
           ) : (

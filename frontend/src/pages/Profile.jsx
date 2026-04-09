@@ -35,10 +35,20 @@ function Profile() {
   const [listingsCount, setListingsCount] = useState(0);
   const [boughtCount, setBoughtCount] = useState(0);
 
-  // Derived state
-  const displayName = currentUser?.displayName || "Student User";
+  // Derived state — prefer Firestore userData for IITD users (custom token has no email/displayName on Auth object)
+  const displayName = userData?.name || currentUser?.displayName || "Student User";
+  const displayEmail = userData?.email || currentUser?.email || "";
   const initial = displayName.charAt(0).toUpperCase();
   const currentPhotoURL = currentUser?.photoURL || null;
+
+  // Sync form fields from context userData (real-time Firestore listener) when not actively editing
+  useEffect(() => {
+    if (!isEditing && userData) {
+      setName(userData.name || currentUser?.displayName || "");
+      setPhone(userData.phone || "");
+      setBio(userData.bio || "");
+    }
+  }, [userData, isEditing, currentUser]);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -50,11 +60,12 @@ function Profile() {
 
         if (userDoc.exists()) {
           const data = userDoc.data();
+          setName(data.name || currentUser.displayName || "");
           setPhone(data.phone || "");
           setBio(data.bio || "");
+        } else {
+          setName(currentUser.displayName || "");
         }
-        
-        setName(currentUser.displayName || "");
 
         // Fetch user stats securely
         const itemsRef = collection(db, "items");
@@ -147,6 +158,7 @@ function Profile() {
       // Save name, phone, bio to Firestore
       const userRef = doc(db, "users", currentUser.uid);
       await setDoc(userRef, {
+        name: name,
         phone: phone,
         bio: bio,
         updatedAt: new Date().toISOString()
@@ -163,7 +175,7 @@ function Profile() {
   }
 
   function cancelEdit() {
-    setName(currentUser?.displayName || "");
+    setName(userData?.name || currentUser?.displayName || "");
     setIsEditing(false);
   }
 
@@ -251,7 +263,7 @@ function Profile() {
         ) : (
           <>
             <h2>{displayName}</h2>
-            <p className="profile-email">{currentUser?.email}</p>
+            <p className="profile-email">{displayEmail}</p>
             {phone && <p className="profile-phone"><Phone size={14} /> {phone}</p>}
             {bio && <p className="profile-bio">{bio}</p>}
           </>
