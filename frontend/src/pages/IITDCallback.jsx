@@ -57,7 +57,8 @@ function IITDCallback() {
       // ── Step 1: Exchange code with backend ────────────────────────────────
       setStep(STEPS[1]);
 
-      const res = await fetch("/api/auth/iitd/token", {
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const res = await fetch(`${API_URL}/api/auth/iitd/token`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ code, code_verifier: codeVerifier }),
