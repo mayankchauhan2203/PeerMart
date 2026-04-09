@@ -13,7 +13,7 @@ admin.initializeApp({
 const app = express();
 app.use(
   cors({
-    origin: "https://peermart.vercel.app/",
+    origin: "https://peermart.vercel.app",
     methods: ["GET", "POST"],
     credentials: true,
   })
