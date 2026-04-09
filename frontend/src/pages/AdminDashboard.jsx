@@ -220,45 +220,46 @@ function AdminDashboard() {
     }
   }
 
-  useEffect(() => {
-    async function fetchOrders() {
-      setLoading(true);
-      try {
-        const q = query(collection(db, "items"), where("status", "==", "reserved"));
-        const snapshot = await getDocs(q);
+  async function fetchOrders() {
+    setLoading(true);
+    try {
+      const q = query(collection(db, "items"), where("status", "==", "reserved"));
+      const snapshot = await getDocs(q);
 
-        const ordersData = await Promise.all(snapshot.docs.map(async (itemDoc) => {
-          const item = { id: itemDoc.id, ...itemDoc.data() };
-          let sellerPhone = "N/A";
-          let buyerPhone = "N/A";
-          if (item.sellerId) {
-            try {
-              const s = await getDoc(doc(db, "users", item.sellerId));
-              if (s.exists()) {
-                sellerPhone = s.data().phone || "No phone";
-                item.sellerEntryNumber = s.data().entry_number || "";
-              }
-            } catch (e) { console.error(e); }
-          }
-          if (item.reservedBy) {
-            try {
-              const b = await getDoc(doc(db, "users", item.reservedBy));
-              if (b.exists()) {
-                buyerPhone = b.data().phone || "No phone";
-                item.buyerEntryNumber = b.data().entry_number || "";
-              }
-            } catch (e) { console.error(e); }
-          }
-          return { ...item, sellerPhone, buyerPhone };
-        }));
+      const ordersData = await Promise.all(snapshot.docs.map(async (itemDoc) => {
+        const item = { id: itemDoc.id, ...itemDoc.data() };
+        let sellerPhone = "N/A";
+        let buyerPhone = "N/A";
+        if (item.sellerId) {
+          try {
+            const s = await getDoc(doc(db, "users", item.sellerId));
+            if (s.exists()) {
+              sellerPhone = s.data().phone || "No phone";
+              item.sellerEntryNumber = s.data().entry_number || "";
+            }
+          } catch (e) { console.error(e); }
+        }
+        if (item.reservedBy) {
+          try {
+            const b = await getDoc(doc(db, "users", item.reservedBy));
+            if (b.exists()) {
+              buyerPhone = b.data().phone || "No phone";
+              item.buyerEntryNumber = b.data().entry_number || "";
+            }
+          } catch (e) { console.error(e); }
+        }
+        return { ...item, sellerPhone, buyerPhone };
+      }));
 
-        setOrders(ordersData);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+      setOrders(ordersData);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
 
     fetchOrders();
     fetchCompletedOrders();
@@ -305,8 +306,21 @@ function AdminDashboard() {
         {/* ── Active Reservations ──────────────────────────────────────── */}
         {activeTab === "active" && (
           <div>
-            <h2 className="admin-panel-title">Active Reservations</h2>
-            <p className="admin-panel-desc">Items currently reserved — mediate and confirm or cancel.</p>
+            <div className="admin-panel-header">
+              <div>
+                <h2 className="admin-panel-title">Active Reservations</h2>
+                <p className="admin-panel-desc">Items currently reserved — mediate and confirm or cancel.</p>
+              </div>
+              <button
+                className="admin-refresh-btn"
+                onClick={fetchOrders}
+                disabled={loading}
+                title="Refresh active reservations"
+              >
+                <RefreshCw size={15} className={loading ? "spinning" : ""} />
+                Refresh
+              </button>
+            </div>
             {loading ? (
               <div className="admin-center"><div className="loading-spinner" /></div>
             ) : orders.length === 0 ? (

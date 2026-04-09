@@ -239,7 +239,7 @@ app.get("/api/auth/status", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-const PORT = process.env.REACT_APP_PORT || 5000;
+const PORT = process.env.PORT || process.env.REACT_APP_PORT || 5000;
 app.listen(PORT, () => {
   console.log(`\n🚀 PeerMart auth server running on http://localhost:${PORT}`);
   console.log(`   Firebase Admin: ✅ Initialised`);

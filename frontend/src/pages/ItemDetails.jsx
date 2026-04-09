@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp, query, where, getDocs, deleteField, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import { Package, ShoppingCart, CheckCircle, User, ArrowLeft, AlertTriangle, Trash2 } from "lucide-react";
+import { Package, ShoppingCart, CheckCircle, User, ArrowLeft, AlertTriangle, Trash2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 function ItemDetails() {
@@ -150,6 +150,42 @@ function ItemDetails() {
     } catch (error) {
       console.error(error);
       toast.error("Failed to reserve. Try again.");
+    }
+  }
+
+  async function handleUnreserve() {
+    if (!window.confirm("Are you sure you want to cancel your reservation for this item?")) return;
+    try {
+      const itemRef = doc(db, "items", item.id);
+      await updateDoc(itemRef, {
+        status: "available",
+        reservedBy: deleteField(),
+        reservedByName: deleteField(),
+        reservedByEmail: deleteField(),
+        reservedAt: deleteField(),
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        recipientId: item.sellerId,
+        type: "item_unreserved",
+        itemId: item.id,
+        itemTitle: item.title,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+
+      setItem(prev => ({ 
+        ...prev, 
+        status: "available", 
+        reservedBy: null,
+        reservedByName: null,
+        reservedByEmail: null
+      }));
+
+      toast.success("Reservation cancelled.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to cancel reservation.");
     }
   }
 
@@ -302,6 +338,15 @@ function ItemDetails() {
               >
                 <ShoppingCart size={20} />
                 {hasReported ? "Cannot reserve (Reported)" : "Reserve Now"}
+              </button>
+            ) : item.reservedBy === currentUser?.uid ? (
+              <button 
+                className="buy-btn buy-btn-reserved item-details-btn" 
+                onClick={handleUnreserve}
+                style={{ cursor: "pointer", opacity: 0.9, backgroundColor: "var(--danger)", color: "white", border: "none" }}
+              >
+                <XCircle size={20} />
+                Cancel Reservation
               </button>
             ) : (
               <button className="buy-btn buy-btn-reserved item-details-btn" disabled>
