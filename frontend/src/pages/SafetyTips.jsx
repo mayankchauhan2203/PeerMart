@@ -12,12 +12,12 @@ function SafetyTips() {
     {
       title: "Inspect Items Thoroughly",
       icon: <Eye size={24} color="var(--accent-primary)" />,
-      desc: "Take your time to thoroughly inspect the item before handing over any money to the admin. If you are buying electronics, ask the admin to demonstrate that it works. You are not obligated to complete the transaction if the item doesn't match its description."
+      desc: "Take your time to thoroughly inspect the item before handing over any money to the seller. If you are buying electronics, ask the seller to demonstrate that it works. You are not obligated to complete the transaction if the item doesn't match its description."
     },
     {
-      title: "Keep Communications on Platform",
+      title: "Keep Communications Direct",
       icon: <Lock size={24} color="var(--accent-primary)" />,
-      desc: "Wait for the admin to facilitate the transaction after reserving. Be wary of users trying to circumvent the process or asking for payment before you meet in person."
+      desc: "Use the contact information provided upon reserving to coordinate the meetup directly with the seller. Be wary of users asking for online payments before you meet face-to-face."
     },
     {
       title: "Report Suspicious Behavior",

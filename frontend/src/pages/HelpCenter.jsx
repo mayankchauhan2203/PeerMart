@@ -10,7 +10,7 @@ function HelpCenter() {
     },
     {
       q: "How do I receive my item after reserving?",
-      a: "Once you reserve an item, our admins are notified. We act as intermediaries by first purchasing the item from the seller, and then we will personally contact you to deliver the item and complete the transaction."
+      a: "Once you reserve an item, the seller is immediately notified and provided with your contact details. You can then coordinate directly with the seller to meet up on campus, inspect the item, and complete the transaction in person."
     },
     {
       q: "Why was my account blocked?",

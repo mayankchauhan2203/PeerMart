@@ -137,9 +137,9 @@ function Home() {
             <div className="feature-icon">
               <Heart size={24} />
             </div>
-            <h3>Minimal Commission Fee</h3>
+            <h3>Zero Commission Fee</h3>
             <p>
-              Keep almost everything you earn with our incredibly low commission rates. Built by students, for students.
+              Keep absolutely everything you earn with zero commission rates. Built by students, for students.
             </p>
           </div>
         </div>

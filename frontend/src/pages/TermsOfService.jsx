@@ -15,10 +15,10 @@ function TermsOfService() {
       <div style={{ padding: 'var(--space-2xl)', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)' }}>
         <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <FileText size={24} color="var(--accent-primary)" />
-          <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>1. Administrator Liability Disclaimer</h2>
+          <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>1. Platform Liability Disclaimer</h2>
         </div>
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-xl)' }}>
-          PeerMart facilitates transactions within the campus community by acting as a direct intermediary. When an item is reserved, our administrators will first purchase the item from the seller and subsequently deliver and sell it to the buyer. While administrators oversee this exchange, PeerMart assumes no liability for the initial quality, safety, legality, or descriptions of items listed by original sellers.
+          PeerMart is a peer-to-peer connection board designed to facilitate transactions within the campus community. When an item is reserved, contact details are shared directly between the buyer and seller. PeerMart acts solely as a discovery platform and assumes no liability for the quality, safety, legality, or descriptions of items listed by users. All physical transactions happen independently of the platform.
         </p>
 
         <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>

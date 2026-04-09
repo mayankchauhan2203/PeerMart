@@ -25,14 +25,14 @@ function PrivacyPolicy() {
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>2. Use of Information</h2>
         </div>
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-xl)' }}>
-          The phone number you provide when reserving an item is exclusively shared with the administrators to facilitate contact between the buyer and the seller. Your email and identity are kept within the private campus database. We do not use your information for targeted advertising or outside marketing.
+          The contact information you provide when reserving an item is exclusively shared with the seller of that specific item to facilitate direct communication. Your email and identity are kept within the private campus database. We do not use your information for targeted advertising or outside marketing.
         </p>
 
         <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>3. Information Sharing</h2>
         </div>
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-xl)' }}>
-          We strictly do <strong>not</strong> sell, rent, or trade your personal information with third parties. Data is only accessible to system administrators to resolve reports and oversee the mediation of reserved items.
+          We strictly do <strong>not</strong> sell, rent, or trade your personal information with third parties. Data is only accessible to the specific peer you are transacting with, and to system administrators to resolve reports and oversee platform safety.
         </p>
 
         <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
