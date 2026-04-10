@@ -128,6 +128,7 @@ function PostItem() {
         sellerId: currentUser.uid,
         sellerName: userData?.name || currentUser.displayName || "IITD Student",
         sellerEmail: userData?.email || currentUser.email,
+        sellerPhone: userData?.phone || currentUser.phone,
         createdAt: serverTimestamp(),
       });
 
