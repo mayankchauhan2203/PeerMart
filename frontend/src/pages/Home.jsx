@@ -117,9 +117,9 @@ function Home() {
             <div className="feature-icon">
               <Shield size={24} />
             </div>
-            <h3>Campus Verified</h3>
+            <h3>IITD Verified Community</h3>
             <p>
-              Only verified students can list and buy items. Trade with confidence knowing everyone is part of your community.
+              Every user on PeerMart is a verified IIT Delhi student, authenticated through the official IITD login. Trade with confidence — you always know who you're dealing with.
             </p>
           </div>
 
@@ -127,9 +127,9 @@ function Home() {
             <div className="feature-icon">
               <Zap size={24} />
             </div>
-            <h3>Instant Listings</h3>
+            <h3>List in Seconds</h3>
             <p>
-              Post an item in under 30 seconds. Add photos, set your price, and reach hundreds of potential buyers instantly.
+              Post an item in under a minute — add a photo, set your price, and your listing goes live instantly to hundreds of fellow students browsing the marketplace.
             </p>
           </div>
 
@@ -137,9 +137,9 @@ function Home() {
             <div className="feature-icon">
               <Heart size={24} />
             </div>
-            <h3>No Hidden Charges</h3>
+            <h3>Transparent Pricing</h3>
             <p>
-              A minimal service fee is charged to support platform operations, ensure safety and maintain a secure, hassle-free marketplace. Built by students, for students.
+              Listing is always free. A small 3% reservation fee (max ₹30) is charged only when a buyer locks in an item — keeping the platform running with no surprises.
             </p>
           </div>
         </div>

@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 const AuthContext = createContext();
 
 // Admin emails — checked against Firestore email (works with custom token UIDs)
-const ADMIN_EMAILS = ["mt6240676@maths.iitd.ac.in", "mayank@iitd.ac.in", "admin@iitd.ac.in", "pushkin@iitd.ac.in"];
+const ADMIN_EMAILS = ["mt6240676@maths.iitd.ac.in", "cs5240081@cse.iitd.ac.in"];
 
 export function useAuth() {
   return useContext(AuthContext);
