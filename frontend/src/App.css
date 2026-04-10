@@ -2083,22 +2083,8 @@ body {
 
   .setting-item {
     padding: var(--space-md);
-    /* Prevent long text from pushing layout off-screen */
     min-width: 0;
     overflow: hidden;
-  }
-
-  .setting-text h4,
-  .setting-text p {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-
-  /* Collapse IITD verified grid to 1 column on tablet/mobile */
-  .verified-identity-grid {
-    grid-template-columns: 1fr !important;
   }
 
   .section-title {
