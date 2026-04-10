@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  User, Shield, ChevronRight, Package, Star, ShoppingBag, CheckCircle,
+  User, Shield, ChevronRight, Package, Star, ShoppingBag, CheckCircle, ClipboardList,
   LogOut, Edit3, Save, X, Phone, AlignLeft, Trash2, Eye, EyeOff,
   ShieldCheck
 } from "lucide-react";
@@ -304,6 +304,16 @@ function Profile() {
               <div className="setting-text">
                 <h4>My Reservations</h4>
                 <p>Track items you've locked in</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="setting-arrow" />
+          </Link>
+          <Link to="/my-completed-orders" className="setting-item">
+            <div className="setting-info">
+              <div className="setting-icon"><ClipboardList size={18} /></div>
+              <div className="setting-text">
+                <h4>My Completed Orders</h4>
+                <p>View your sold &amp; bought history</p>
               </div>
             </div>
             <ChevronRight size={18} className="setting-arrow" />
