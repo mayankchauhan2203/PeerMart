@@ -606,7 +606,7 @@ function ItemDetails() {
                       <strong style={{ color: "var(--accent-primary)" }}>
                         ₹{item.price > 1000 ? 30 : Math.round(item.price * 0.03)}
                       </strong>
-                      {" "}(3% of price, max ₹30) is charged to lock this item. To know more about this, visit our{" "}
+                      {" "}(3% of price, max ₹30) is charged to lock this item. To know more, visit our{" "}
                       <a href="/terms" target="_blank" rel="noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>Terms of Service</a>
                       {" "}page.
                     </span>
