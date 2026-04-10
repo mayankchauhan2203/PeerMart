@@ -43,6 +43,7 @@ function Footer() {
             <li><Link to="/safety">Safety Tips</Link></li>
             <li><Link to="/terms">Terms of Service</Link></li>
             <li><Link to="/privacy">Privacy Policy</Link></li>
+            <li><Link to="/feedback">Give Feedback</Link></li>
           </ul>
         </div>
       </div>

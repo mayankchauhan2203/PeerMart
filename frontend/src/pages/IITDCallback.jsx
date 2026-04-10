@@ -108,12 +108,17 @@ function IITDCallback() {
           lastLogin:    new Date().toISOString(),
           // Only set createdAt on first robust login
           ...((!existing.exists() || !existing.data()?.createdAt) && { createdAt: new Date().toISOString() }),
+          // New users must accept terms before using the platform
+          ...(!existing.exists() && { termsAccepted: false }),
         },
         { merge: true }
       );
 
       // ── Clean up sessionStorage ───────────────────────────────────────────
-      const redirectTo = sessionStorage.getItem("oauth_redirect_after") || "/marketplace";
+      const isNewUser = !existing.exists();
+      const redirectTo = isNewUser
+        ? "/terms-gate"
+        : (sessionStorage.getItem("oauth_redirect_after") || "/marketplace");
       sessionStorage.removeItem("oauth_state");
       sessionStorage.removeItem("oauth_redirect_after");
 

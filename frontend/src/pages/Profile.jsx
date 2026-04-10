@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  User, Shield, ChevronRight, Package, Star, ShoppingBag, CheckCircle, ClipboardList,
+  User, Shield, ChevronRight, Package, Star, ShoppingBag, CheckCircle, ClipboardList, MessageSquare,
   LogOut, Edit3, Save, X, Phone, AlignLeft, Trash2, Eye, EyeOff,
   ShieldCheck
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
-import { doc, getDoc, setDoc, query, collection, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, query, collection, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import toast from "react-hot-toast";
 
@@ -19,6 +19,11 @@ function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueSubject, setIssueSubject] = useState("");
+  const [issueMessage, setIssueMessage] = useState("");
+  const [issueSubmitting, setIssueSubmitting] = useState(false);
+  const [issueSubmitted, setIssueSubmitted] = useState(false);
 
   // Form State
   const [name, setName] = useState("");
@@ -346,7 +351,85 @@ function Profile() {
           </div>
           */}
 
+          {/* Raise an Issue */}
+          <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: showIssueForm ? 'var(--space-md)' : '16px' }}>
+            <div
+              className="setting-info"
+              style={{ width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              onClick={() => { setShowIssueForm(!showIssueForm); setIssueSubmitted(false); }}
+            >
+              <div className="setting-icon"><MessageSquare size={18} /></div>
+              <div className="setting-text" style={{ flexGrow: 1 }}>
+                <h4>Raise an Issue</h4>
+                <p>Send a query or concern to admins</p>
+              </div>
+              <ChevronRight size={18} className="setting-arrow" style={{ transform: showIssueForm ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+            </div>
 
+            {showIssueForm && (
+              <div style={{ width: '100%', marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-subtle)' }}>
+                {issueSubmitted ? (
+                  <div style={{ textAlign: 'center', padding: 'var(--space-md)', color: '#4ade80', background: 'rgba(74,222,128,0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(74,222,128,0.15)' }}>
+                    <CheckCircle size={24} style={{ margin: '0 auto 8px', display: 'block' }} />
+                    <p style={{ margin: 0, fontWeight: 600 }}>Issue submitted!</p>
+                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>The admin team will review your message.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    setIssueSubmitting(true);
+                    try {
+                      await addDoc(collection(db, 'userQueries'), {
+                        userId: currentUser.uid,
+                        userName: userData?.name || currentUser?.displayName || 'Unknown',
+                        userEmail: userData?.email || currentUser?.email || '',
+                        subject: issueSubject,
+                        message: issueMessage,
+                        status: 'open',
+                        createdAt: serverTimestamp(),
+                      });
+                      setIssueSubmitted(true);
+                      setIssueSubject('');
+                      setIssueMessage('');
+                    } catch (err) {
+                      console.error(err);
+                    } finally {
+                      setIssueSubmitting(false);
+                    }
+                  }}>
+                    <div className="form-group edit-form-group" style={{ marginBottom: 'var(--space-md)' }}>
+                      <label>Subject</label>
+                      <input
+                        type="text"
+                        value={issueSubject}
+                        onChange={e => setIssueSubject(e.target.value)}
+                        placeholder="e.g. Payment issue, account problem..."
+                        required
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', color: 'white', marginTop: 'var(--space-xs)', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div className="form-group edit-form-group" style={{ marginBottom: 'var(--space-md)' }}>
+                      <label>Message</label>
+                      <textarea
+                        value={issueMessage}
+                        onChange={e => setIssueMessage(e.target.value)}
+                        placeholder="Describe your issue in detail..."
+                        required
+                        rows={4}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', color: 'white', marginTop: 'var(--space-xs)', resize: 'vertical', fontFamily: 'var(--font-sans)', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div className="edit-actions" style={{ justifyContent: 'flex-start', gap: 'var(--space-md)' }}>
+                      <button type="button" className="btn-cancel" onClick={() => setShowIssueForm(false)} style={{ padding: '8px 16px', fontSize: '13px' }}>Cancel</button>
+                      <button type="submit" className="btn-save" disabled={issueSubmitting} style={{ padding: '8px 16px', fontSize: '13px' }}>
+                        {issueSubmitting ? 'Submitting...' : 'Submit Issue'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
 
           <div
             className="setting-item"

@@ -16,7 +16,9 @@ import IITDCallback from "./pages/IITDCallback.jsx";
 import HelpCenter from "./pages/HelpCenter.jsx";
 import SafetyTips from "./pages/SafetyTips.jsx";
 import TermsOfService from "./pages/TermsOfService.jsx";
+import TermsGate from "./pages/TermsGate.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+import Feedback from "./pages/Feedback.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -124,6 +126,8 @@ function App() {
               <Route path="/safety" element={<SafetyTips />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/feedback" element={<Feedback />} />
+              <Route path="/terms-gate" element={<TermsGate />} />
             </Routes>
           </main>
           <Footer />
