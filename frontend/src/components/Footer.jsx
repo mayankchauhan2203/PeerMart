@@ -56,9 +56,6 @@ function Footer() {
           <a href="mailto:peermartiitd@gmail.com" aria-label="Gmail">
             <Mail size={16} />
           </a>
-          <a href="https://github.com/mayankchauhan2203" aria-label="GitHub">
-            <Github size={16} />
-          </a>
           <a href="https://www.linkedin.com/in/mayank-chauhan-mc2203" aria-label="LinkedIn">
             <Linkedin size={16} />
           </a>

@@ -200,8 +200,7 @@ app.post("/api/auth/iitd/token", async (req, res) => {
 
     // Enforce IITD-only access: reject non-@iitd.ac.in accounts
     const email = merged.email || "";
-    const deptartment = merged.department || "";
-    if (!email.endsWith("@" + deptartment + ".iitd.ac.in")) {
+    if (!email.endsWith(".iitd.ac.in") && !email.endsWith("@iitd.ac.in")) {
       console.warn(`[AUTH] Rejected non-IITD login attempt: ${email || "(no email)"}`);
       return res.status(403).json({
         error: "Access restricted to IIT Delhi accounts only. Please sign in with your @iitd.ac.in email.",
