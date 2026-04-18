@@ -42,8 +42,9 @@ service cloud.firestore {
     //         createdAt, updatedAt
     match /users/{userId} {
 
-      // Only the account owner and admins may read a user document
-      allow read: if isOwner(userId) || isAdmin();
+      // Any authenticated IITD user may read a user document (needed for seller contact)
+      // Write access remains restricted to the owner and admins
+      allow read: if isAuth();
 
       // Document is created by the backend after IITD OAuth; the frontend
       // upserts it with signInWithCustomToken → the UID must match
