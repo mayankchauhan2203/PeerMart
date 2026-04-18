@@ -108,22 +108,34 @@ service cloud.firestore {
     // Fields: sellerPhone, sellerId
     match /items/{itemId}/private/{doc} {
 
-      // Readable only by: the seller, the confirmed reserved buyer, and admins.
+      // No get() calls — sellerId and reservedBy are stored directly on this
+      // document so reads never race with a freshly-committed item write.
       allow read: if isAdmin() ||
                      (isAuth() && (
-                       get(/databases/$(database)/documents/items/$(itemId)).data.sellerId == request.auth.uid ||
-                       get(/databases/$(database)/documents/items/$(itemId)).data.reservedBy == request.auth.uid
+                       resource.data.sellerId   == request.auth.uid ||
+                       resource.data.reservedBy == request.auth.uid
                      ));
 
       // Seller creates the contact doc right after creating the item.
-      // sellerId in the subcollection must match the caller so ownership can
-      // be verified on subsequent updates/deletes without a parent get().
       allow create: if isAuth() &&
                        request.resource.data.sellerId == request.auth.uid;
 
-      // Only the seller or admin may update (e.g. phone number correction)
+      // Seller / admin: full update.
+      // Buyer: may only touch the reservedBy field.
+      //   • Setting it: their UID must equal the item's reservedBy (verified
+      //     via get() — safe because the item updateDoc has already committed).
+      //   • Clearing it: only if it currently equals their UID.
       allow update: if isAdmin() ||
-                       (isAuth() && resource.data.sellerId == request.auth.uid);
+                       (isAuth() && resource.data.sellerId == request.auth.uid) ||
+                       (isAuth() &&
+                        request.resource.data.diff(resource.data)
+                          .affectedKeys().hasOnly(['reservedBy']) &&
+                        (
+                          (request.resource.data.reservedBy == request.auth.uid &&
+                           get(/databases/$(database)/documents/items/$(itemId)).data.reservedBy == request.auth.uid) ||
+                          (!('reservedBy' in request.resource.data) &&
+                           resource.data.reservedBy == request.auth.uid)
+                        ));
 
       // Cascades with parent item deletion
       allow delete: if isAdmin() ||

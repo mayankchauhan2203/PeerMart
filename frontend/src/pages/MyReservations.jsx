@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc, deleteField } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { Package, ShieldAlert, X, Phone, User, Mail, ChevronLeft, MapPin } from "lucide-react";
@@ -65,6 +65,11 @@ function MyReservations() {
         reservedByPhone: null,
         reservedAt: null,
       });
+
+      // Clear reservedBy from private subcollection
+      await updateDoc(doc(db, "items", item.id, "private", "contact"), {
+        reservedBy: deleteField(),
+      }).catch(() => {});
 
       // Notification
       await addDoc(collection(db, "notifications"), {

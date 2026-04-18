@@ -182,6 +182,15 @@ function ItemDetails() {
           createdAt: serverTimestamp(),
         });
 
+        // Write reservedBy into the subcollection so the read rule can check
+        // it directly without a get() call — no race condition possible.
+        const contactRef = doc(db, "items", item.id, "private", "contact");
+        await updateDoc(contactRef, { reservedBy: currentUser.uid });
+
+        // Now the rule passes — fetch the full contact doc
+        const contactSnap = await getDoc(contactRef);
+        if (contactSnap.exists()) setSellerContact(contactSnap.data());
+
         setItem(prev => ({
           ...prev,
           status: "reserved",
@@ -190,11 +199,6 @@ function ItemDetails() {
           reservedByEmail: currentUser.email,
           reservedByPhone: reservePhone
         }));
-
-        // Now the buyer is authorised — fetch the seller's private contact
-        getDoc(doc(db, "items", item.id, "private", "contact")).then(contactSnap => {
-          if (contactSnap.exists()) setSellerContact(contactSnap.data());
-        }).catch(() => {});
 
         toast.success("Item reserved successfully!");
         setShowReserveModal(false);
@@ -292,6 +296,12 @@ function ItemDetails() {
         reservedByEmail: deleteField(),
         reservedAt: deleteField(),
       });
+
+      // Clear reservedBy from the private subcollection
+      await updateDoc(doc(db, "items", item.id, "private", "contact"), {
+        reservedBy: deleteField(),
+      }).catch(() => {});
+      setSellerContact(null);
 
       await addDoc(collection(db, "notifications"), {
         recipientId: item.sellerId,
