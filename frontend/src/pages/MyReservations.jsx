@@ -90,17 +90,16 @@ function MyReservations() {
     }
   };
 
-  const openSellerDetails = async (sellerId) => {
+  const openSellerDetails = async (item) => {
     setActionLoading(true);
     try {
-      const userRef = doc(db, "users", sellerId);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        setSelectedSeller(userSnap.data());
-        setShowSellerDetails(true);
-      } else {
-        toast.error("Seller account no longer exists in database.");
-      }
+      const contactSnap = await getDoc(doc(db, "items", item.id, "private", "contact"));
+      setSelectedSeller({
+        name:  item.sellerName  || "Unknown",
+        email: item.sellerEmail || "Private",
+        phone: contactSnap.exists() ? (contactSnap.data().sellerPhone || "Not provided") : "Not provided",
+      });
+      setShowSellerDetails(true);
     } catch (error) {
       toast.error("Failed to load seller details.");
     } finally {
@@ -146,7 +145,7 @@ function MyReservations() {
                 <button 
                   className="btn btn-primary" 
                   style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  onClick={() => openSellerDetails(item.sellerId)}
+                  onClick={() => openSellerDetails(item)}
                   disabled={actionLoading}
                 >
                   <User size={14} /> Get Seller Details
