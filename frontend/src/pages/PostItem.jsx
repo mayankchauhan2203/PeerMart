@@ -142,7 +142,7 @@ function PostItem() {
       // Store phone in a private subcollection — not readable by the public
       try {
         await setDoc(doc(db, "items", itemRef.id, "private", "contact"), {
-          sellerPhone: userData?.phone || "",
+          sellerPhone: phoneToSave || userData?.phone || "",
           sellerId: currentUser.uid,
         });
       } catch (error) {
