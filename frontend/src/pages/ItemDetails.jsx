@@ -78,18 +78,30 @@ function ItemDetails() {
     fetchItem();
   }, [id, navigate, isAdmin]);
 
-  // Separate effect so it re-runs whenever currentUser resolves (auth is async).
-  // The main fetchItem effect doesn't list currentUser as a dep, so without this
-  // the contact is never fetched for a buyer who navigates back to the page.
+  // Fetches the private contact doc whenever the viewer's auth or the item's
+  // reservation state changes.  For buyers we first merge {reservedBy} into the
+  // subcollection so the read rule passes even on re-visits or legacy items.
   useEffect(() => {
     if (!item || !currentUser) return;
     const isSeller = item.sellerId === currentUser.uid;
     const isBuyer  = item.reservedBy === currentUser.uid;
     if (!isSeller && !isBuyer && !isAdmin) return;
 
-    getDoc(doc(db, "items", item.id, "private", "contact"))
-      .then(snap => { if (snap.exists()) setSellerContact(snap.data()); })
-      .catch(e => console.error("Error fetching seller contact:", e));
+    const contactRef = doc(db, "items", item.id, "private", "contact");
+
+    (async () => {
+      try {
+        if (isBuyer) {
+          // Ensure reservedBy exists in the subcollection before reading.
+          // setDoc+merge is idempotent and creates the doc when it doesn't exist.
+          await setDoc(contactRef, { reservedBy: currentUser.uid }, { merge: true });
+        }
+        const snap = await getDoc(contactRef);
+        if (snap.exists()) setSellerContact(snap.data());
+      } catch (e) {
+        console.error("Error fetching seller contact:", e);
+      }
+    })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id, item?.reservedBy, item?.sellerId, currentUser?.uid, isAdmin]);
 
