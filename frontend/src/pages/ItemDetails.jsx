@@ -37,6 +37,9 @@ function ItemDetails() {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [hasReported, setHasReported] = useState(false);
 
+  // Seller contact — only fetched when the viewer is authorised to see it
+  const [sellerContact, setSellerContact] = useState(null);
+
   // ── Carousel state ──────────────────────────────────────────────────────
   const [activeImg, setActiveImg] = useState(0);
   const [lightbox, setLightbox] = useState(false);
@@ -50,19 +53,14 @@ function ItemDetails() {
           const itemData = { id: itemSnap.id, ...itemSnap.data() };
           setItem(itemData);
 
-          // Admin: fetch seller's full profile to get phone (works for old & new listings)
-          if (isAdmin && itemData.sellerId) {
-            getDoc(doc(db, "users", itemData.sellerId)).then(sellerSnap => {
-              if (sellerSnap.exists()) {
-                const sellerData = sellerSnap.data();
-                setItem(prev => ({
-                  ...prev,
-                  sellerPhone: sellerData.phone || prev.sellerPhone || null,
-                  sellerName: prev.sellerName || sellerData.name || null,
-                  sellerEmail: prev.sellerEmail || sellerData.email || null,
-                }));
-              }
-            }).catch(e => console.error("Error fetching seller profile:", e));
+          // Fetch private contact doc for authorised viewers:
+          // seller, reserved buyer, or admin.
+          const isSeller = currentUser && itemData.sellerId === currentUser.uid;
+          const isBuyer  = currentUser && itemData.reservedBy === currentUser.uid;
+          if (isSeller || isBuyer || isAdmin) {
+            getDoc(doc(db, "items", id, "private", "contact")).then(contactSnap => {
+              if (contactSnap.exists()) setSellerContact(contactSnap.data());
+            }).catch(e => console.error("Error fetching seller contact:", e));
           }
 
           if (currentUser) {
@@ -192,6 +190,11 @@ function ItemDetails() {
           reservedByEmail: currentUser.email,
           reservedByPhone: reservePhone
         }));
+
+        // Now the buyer is authorised — fetch the seller's private contact
+        getDoc(doc(db, "items", item.id, "private", "contact")).then(contactSnap => {
+          if (contactSnap.exists()) setSellerContact(contactSnap.data());
+        }).catch(() => {});
 
         toast.success("Item reserved successfully!");
         setShowReserveModal(false);
@@ -588,16 +591,54 @@ function ItemDetails() {
                     📧 <a href={`mailto:${item.sellerEmail}`} style={{ color: "var(--text-muted)" }}>{item.sellerEmail}</a>
                   </p>
                 )}
-                {item.sellerPhone && (
+                {(sellerContact?.sellerPhone || item.sellerPhone) ? (
                   <p style={{ margin: "1px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                    📞 <a href={`tel:${item.sellerPhone}`} style={{ color: "var(--text-muted)" }}>{item.sellerPhone}</a>
+                    📞 <a href={`tel:${sellerContact?.sellerPhone || item.sellerPhone}`} style={{ color: "var(--text-muted)" }}>{sellerContact?.sellerPhone || item.sellerPhone}</a>
                   </p>
-                )}
-                {!item.sellerPhone && (
+                ) : (
                   <p style={{ margin: "1px 0 0", fontSize: "11px", color: "var(--text-muted)", fontStyle: "italic" }}>
                     No phone on record
                   </p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Seller contact — shown to the reserved buyer only */}
+          {!isAdmin && item.reservedBy === currentUser?.uid && sellerContact?.sellerPhone && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "var(--space-md) var(--space-lg)",
+              background: "rgba(34,197,94,0.06)",
+              border: "1px solid rgba(34,197,94,0.25)",
+              borderRadius: "var(--radius-md)",
+              marginBottom: "var(--space-sm)",
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: "var(--accent-gradient)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, fontSize: "14px", fontWeight: 700, color: "#000"
+              }}>
+                {(item.sellerName || "?").charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: "11px", color: "rgb(34,197,94)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Seller Contact
+                </p>
+                <p style={{ margin: "2px 0 0", fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
+                  {item.sellerName || "Unknown"}
+                </p>
+                {item.sellerEmail && (
+                  <p style={{ margin: "1px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
+                    📧 <a href={`mailto:${item.sellerEmail}`} style={{ color: "var(--text-muted)" }}>{item.sellerEmail}</a>
+                  </p>
+                )}
+                <p style={{ margin: "1px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
+                  📞 <a href={`tel:${sellerContact.sellerPhone}`} style={{ color: "var(--text-muted)" }}>{sellerContact.sellerPhone}</a>
+                </p>
               </div>
             </div>
           )}

@@ -1,0 +1,239 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ────────────────────────────────────────────────────
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Admins are identified by their IITD email stored in the custom-token claim
+    function isAdmin() {
+      return isAuth() && request.auth.token.email in [
+        "mt6240676@maths.iitd.ac.in",
+        "cs5240081@cse.iitd.ac.in"
+      ];
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // All users coming through the IITD OAuth flow have UIDs starting with "iitd_"
+    function isIITDUser() {
+      return isAuth() && request.auth.uid.matches('iitd_.*');
+    }
+
+    // Checks Firestore to confirm the caller is not blocked (costs 1 read)
+    function isNotBlocked() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.blocked != true;
+    }
+
+    // ─── users ───────────────────────────────────────────────────────────────
+    // Fields: uid, email, name, kerberos_id, entry_number, department,
+    //         hostel, phone, bio, blocked, termsAccepted, lastLogin,
+    //         createdAt, updatedAt
+    match /users/{userId} {
+
+      // Only the account owner and admins may read a user document
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Document is created by the backend after IITD OAuth; the frontend
+      // upserts it with signInWithCustomToken → the UID must match
+      allow create: if isOwner(userId) && isIITDUser();
+
+      // Owner may update their own profile but may not touch privileged fields.
+      // Admins may update anything (e.g. set blocked = true/false).
+      allow update: if isAdmin() ||
+                       (isOwner(userId) &&
+                        !request.resource.data.diff(resource.data)
+                          .affectedKeys()
+                          .hasAny(['blocked', 'uid', 'email', 'kerberos_id',
+                                   'entry_number', 'createdAt']));
+
+      // Owner may delete their own account (cascading deletes handled in app);
+      // admins may also delete a user document.
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // ─── items ───────────────────────────────────────────────────────────────
+    // Fields: title, price, description, category, image, images, status,
+    //         sellerId, sellerName, sellerEmail,
+    //         reservedBy, reservedByName, reservedByEmail, reservedByPhone,
+    //         reservedAt, createdAt, sellerBlocked
+    // NOTE: sellerPhone is NOT stored here — it lives in the private subcollection below.
+    match /items/{itemId} {
+
+      // Marketplace listings are publicly readable (homepage + marketplace page)
+      allow read: if true;
+
+      // Only authenticated, non-blocked IITD users may list items.
+      // The sellerId in the new document must equal the caller's UID.
+      allow create: if isIITDUser() && isNotBlocked() &&
+                       request.resource.data.sellerId == request.auth.uid &&
+                       request.resource.data.status == 'available';
+
+      allow update: if isAdmin() ||
+                       (isAuth() && isNotBlocked() && (
+                         // Seller edits / cancels reservation on their own listing
+                         resource.data.sellerId == request.auth.uid ||
+
+                         // Buyer reserves an available item
+                         (resource.data.status == 'available' &&
+                          request.resource.data.status == 'reserved' &&
+                          request.resource.data.reservedBy == request.auth.uid) ||
+
+                         // Buyer cancels their own reservation
+                         (resource.data.status == 'reserved' &&
+                          resource.data.reservedBy == request.auth.uid &&
+                          request.resource.data.status == 'available' &&
+                          !('reservedBy' in request.resource.data))
+                       ));
+
+      // Seller deletes their own listing; admin may remove any listing
+      allow delete: if isAdmin() ||
+                       (isAuth() && resource.data.sellerId == request.auth.uid);
+    }
+
+    // ─── items/{itemId}/private ───────────────────────────────────────────────
+    // Stores sensitive contact data that must not be publicly readable.
+    // Document path: items/{itemId}/private/contact
+    // Fields: sellerPhone, sellerId
+    match /items/{itemId}/private/{doc} {
+
+      // Readable only by: the seller, the confirmed reserved buyer, and admins.
+      allow read: if isAdmin() ||
+                     (isAuth() && (
+                       get(/databases/$(database)/documents/items/$(itemId)).data.sellerId == request.auth.uid ||
+                       get(/databases/$(database)/documents/items/$(itemId)).data.reservedBy == request.auth.uid
+                     ));
+
+      // Seller creates the contact doc right after creating the item.
+      // sellerId in the subcollection must match the caller so ownership can
+      // be verified on subsequent updates/deletes without a parent get().
+      allow create: if isAuth() &&
+                       request.resource.data.sellerId == request.auth.uid;
+
+      // Only the seller or admin may update (e.g. phone number correction)
+      allow update: if isAdmin() ||
+                       (isAuth() && resource.data.sellerId == request.auth.uid);
+
+      // Cascades with parent item deletion
+      allow delete: if isAdmin() ||
+                       (isAuth() && resource.data.sellerId == request.auth.uid);
+    }
+
+    // ─── notifications ───────────────────────────────────────────────────────
+    // Fields: recipientId ("admin" | uid), type, itemId, itemTitle, itemPrice,
+    //         buyerName, message, read, createdAt
+    match /notifications/{notificationId} {
+
+      // Users read their own notifications; admins read the "admin" inbox
+      allow read: if isAuth() &&
+                     (resource.data.recipientId == request.auth.uid ||
+                      (isAdmin() && resource.data.recipientId == 'admin'));
+
+      // Any authenticated user may create notifications (app logic sends
+      // notifications to other users and to the admin inbox)
+      allow create: if isAuth();
+
+      // Mark-as-read update for own notifications; admins manage admin inbox
+      allow update: if isAuth() &&
+                       (resource.data.recipientId == request.auth.uid ||
+                        isAdmin());
+
+      // Users delete their own notifications (account deletion cascade);
+      // admins may delete any notification
+      allow delete: if isAuth() &&
+                       (resource.data.recipientId == request.auth.uid ||
+                        isAdmin());
+    }
+
+    // ─── completedOrders ─────────────────────────────────────────────────────
+    // Fields: orderNumber, itemId, itemTitle, itemPrice, itemImage, itemCategory,
+    //         sellerId, sellerName, sellerEmail, sellerPhone, sellerEntryNumber,
+    //         buyerId, buyerName, buyerEmail, buyerPhone, buyerEntryNumber,
+    //         completedAt
+    match /completedOrders/{orderId} {
+
+      // Only the seller, the buyer, or an admin may read an order
+      allow read: if isAuth() &&
+                     (resource.data.sellerId == request.auth.uid ||
+                      resource.data.buyerId == request.auth.uid ||
+                      isAdmin());
+
+      // Seller creates the order document when marking an item as sold
+      allow create: if isAuth() &&
+                       request.resource.data.sellerId == request.auth.uid;
+
+      // Orders are immutable once created; only admin may correct them
+      allow update: if isAdmin();
+
+      // Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ─── reports ─────────────────────────────────────────────────────────────
+    // Fields: itemId, itemTitle, reporterId, reporterName, reporterEmail,
+    //         sellerName, sellerEmail, message, createdAt
+    match /reports/{reportId} {
+
+      // Reporter reads their own report; admin reads all reports
+      allow read: if isAuth() &&
+                     (resource.data.reporterId == request.auth.uid || isAdmin());
+
+      // Any authenticated, non-blocked user may file a report.
+      // The reporterId must match the caller.
+      allow create: if isAuth() && isNotBlocked() &&
+                       request.resource.data.reporterId == request.auth.uid;
+
+      // Only admin may change a report (e.g. status changes)
+      allow update: if isAdmin();
+
+      // Admin or the original reporter may delete a report
+      allow delete: if isAdmin() ||
+                       (isAuth() && resource.data.reporterId == request.auth.uid);
+    }
+
+    // ─── userQueries ─────────────────────────────────────────────────────────
+    // Fields: userId, userName, userEmail, subject, message, status, createdAt
+    match /userQueries/{queryId} {
+
+      // User reads their own queries; admin reads all
+      allow read: if isAuth() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Any authenticated user may submit a support query.
+      // The userId must match the caller.
+      allow create: if isAuth() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Admin marks queries as resolved / updates status
+      allow update: if isAdmin();
+
+      // Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ─── userFeedback ────────────────────────────────────────────────────────
+    // Fields: userId, userName, userEmail, message, createdAt
+    match /userFeedback/{feedbackId} {
+
+      // User reads their own feedback; admin reads all
+      allow read: if isAuth() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Any authenticated user may submit feedback
+      allow create: if isAuth();
+
+      // Admin only
+      allow update: if isAdmin();
+
+      // Admin only
+      allow delete: if isAdmin();
+    }
+  }
+}

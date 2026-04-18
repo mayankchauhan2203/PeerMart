@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, setDoc, serverTimestamp, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Send, Camera, Tag, DollarSign, FileText, Layers, X, Plus } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -117,7 +117,7 @@ function PostItem() {
         return;
       }
 
-      await addDoc(collection(db, "items"), {
+      const itemRef = await addDoc(collection(db, "items"), {
         title,
         price: Number(price),
         description,
@@ -128,8 +128,13 @@ function PostItem() {
         sellerId: currentUser.uid,
         sellerName: userData?.name || currentUser.displayName || "IITD Student",
         sellerEmail: userData?.email || currentUser.email,
-        sellerPhone: userData?.phone || currentUser.phone || "",
         createdAt: serverTimestamp(),
+      });
+
+      // Store phone in a private subcollection — not readable by the public
+      await setDoc(doc(db, "items", itemRef.id, "private", "contact"), {
+        sellerPhone: userData?.phone || "",
+        sellerId: currentUser.uid,
       });
 
       toast.success("Item listed successfully!");
