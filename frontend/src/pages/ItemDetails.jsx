@@ -634,7 +634,7 @@ function ItemDetails() {
           )}
 
           {/* Seller contact — shown to the reserved buyer only */}
-          {!isAdmin && item.reservedBy === currentUser?.uid && (
+          {!isAdmin && currentUser && item.reservedBy === currentUser.uid && (
             <div style={{
               display: "flex",
               alignItems: "center",
