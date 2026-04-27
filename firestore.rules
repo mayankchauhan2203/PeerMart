@@ -66,10 +66,12 @@ service cloud.firestore {
 
     // ─── items ───────────────────────────────────────────────────────────────
     // Fields: title, price, description, category, image, images, status,
-    //         sellerId, sellerName, sellerEmail,
+    //         sellerId, sellerName,
     //         reservedBy, reservedByName, reservedByEmail, reservedByPhone,
     //         reservedAt, createdAt, sellerBlocked
-    // NOTE: sellerPhone is NOT stored here — it lives in the private subcollection below.
+    // NOTE: sellerEmail and sellerPhone are NOT stored here — they live in the
+    //       private subcollection below. Legacy items may still have sellerEmail
+    //       on this document; new items will not.
     match /items/{itemId} {
 
       // Marketplace listings are publicly readable (homepage + marketplace page)
@@ -106,7 +108,7 @@ service cloud.firestore {
     // ─── items/{itemId}/private ───────────────────────────────────────────────
     // Stores sensitive contact data that must not be publicly readable.
     // Document path: items/{itemId}/private/contact
-    // Fields: sellerPhone, sellerId
+    // Fields: sellerPhone, sellerEmail, sellerId
     match /items/{itemId}/private/{doc} {
 
       // No get() calls — sellerId and reservedBy are stored directly on this

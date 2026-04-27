@@ -615,9 +615,9 @@ function ItemDetails() {
                 <p style={{ margin: "2px 0 0", fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
                   {item.sellerName || "Unknown"}
                 </p>
-                {item.sellerEmail && (
+                {(sellerContact?.sellerEmail || item.sellerEmail) && (
                   <p style={{ margin: "1px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                    📧 <a href={`mailto:${item.sellerEmail}`} style={{ color: "var(--text-muted)" }}>{item.sellerEmail}</a>
+                    📧 <a href={`mailto:${sellerContact?.sellerEmail || item.sellerEmail}`} style={{ color: "var(--text-muted)" }}>{sellerContact?.sellerEmail || item.sellerEmail}</a>
                   </p>
                 )}
                 {(sellerContact?.sellerPhone || item.sellerPhone) ? (
@@ -634,7 +634,7 @@ function ItemDetails() {
           )}
 
           {/* Seller contact — shown to the reserved buyer only */}
-          {!isAdmin && currentUser && item.reservedBy === currentUser.uid && (
+          {!isAdmin && currentUser && item.status === "reserved" && item.reservedBy === currentUser.uid && (
             <div style={{
               display: "flex",
               alignItems: "center",
@@ -660,9 +660,9 @@ function ItemDetails() {
                 <p style={{ margin: "2px 0 0", fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
                   {item.sellerName || "Unknown"}
                 </p>
-                {item.sellerEmail && (
+                {(sellerContact?.sellerEmail || item.sellerEmail) && (
                   <p style={{ margin: "1px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                    📧 <a href={`mailto:${item.sellerEmail}`} style={{ color: "var(--text-muted)" }}>{item.sellerEmail}</a>
+                    📧 <a href={`mailto:${sellerContact?.sellerEmail || item.sellerEmail}`} style={{ color: "var(--text-muted)" }}>{sellerContact?.sellerEmail || item.sellerEmail}</a>
                   </p>
                 )}
                 {(sellerContact?.sellerPhone || item.sellerPhone) ? (

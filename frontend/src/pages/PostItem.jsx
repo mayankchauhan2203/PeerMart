@@ -129,7 +129,6 @@ function PostItem() {
           status: "available",
           sellerId: currentUser.uid,
           sellerName: userData?.name || currentUser.displayName || "IITD Student",
-          sellerEmail: userData?.email || currentUser.email,
           createdAt: serverTimestamp(),
         });
       } catch (error) {
@@ -143,6 +142,7 @@ function PostItem() {
       try {
         await setDoc(doc(db, "items", itemRef.id, "private", "contact"), {
           sellerPhone: phoneToSave || userData?.phone || "",
+          sellerEmail: userData?.email || currentUser.email || "",
           sellerId: currentUser.uid,
         });
       } catch (error) {
