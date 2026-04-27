@@ -225,11 +225,15 @@ function AdminDashboard() {
     try {
       const snap = await getDocs(collection(db, "users"));
       const raw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      raw.sort((a, b) => {
-        const ta = a.createdAt || a.updatedAt || "";
-        const tb = b.createdAt || b.updatedAt || "";
-        return tb.localeCompare(ta);
-      });
+      function tsToMs(val) {
+        if (!val) return 0;
+        if (typeof val.toMillis === 'function') return val.toMillis();
+        const ms = new Date(val).getTime();
+        return isNaN(ms) ? 0 : ms;
+      }
+      raw.sort((a, b) =>
+        tsToMs(b.createdAt || b.updatedAt) - tsToMs(a.createdAt || a.updatedAt)
+      );
       setUsers(raw);
     } catch (e) {
       console.error(e);
@@ -565,7 +569,7 @@ function AdminDashboard() {
                       {(user.createdAt || user.updatedAt) && (
                         <span className="admin-user-joined">
                           <Calendar size={12} />
-                          {new Date(user.createdAt || user.updatedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                          {formatDate(user.createdAt || user.updatedAt)}
                         </span>
                       )}
                       <button className={`admin-block-btn ${user.blocked ? "admin-block-btn--unblock" : ""}`} onClick={() => handleBlockToggle(user)} title={user.blocked ? "Unblock user" : "Block user"}>
