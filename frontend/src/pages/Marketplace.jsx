@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 const CATEGORIES = ["All", "Electronics", "Books", "Furniture", "Clothing", "Sports", "Other"];
 
 function Marketplace() {
-  const { currentUser, userData, isBlocked } = useAuth();
+  const { isBlocked } = useAuth();
   const navigate = useNavigate(); // we need to import useNavigate and use it to redirect
   const location = useLocation();
   const [items, setItems] = useState([]);
@@ -158,7 +158,7 @@ function Marketplace() {
                 key={item.id}
                 className={`product-card${isSold ? " product-card-sold" : ""}`}
                 id={`product-${item.id}`}
-                onClick={() => navigate(`/item/${item.id}`)}
+                onClick={() => !isSold && navigate(`/item/${item.id}`)}
                 style={{ cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s" }}
               >
                 <div className="product-card-image">
