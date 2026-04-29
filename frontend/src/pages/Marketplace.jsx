@@ -42,22 +42,21 @@ function Marketplace() {
     setLoading(false);
   }
 
-  const filteredItems = items.filter((item) => {
-    if (item.status === "sold") {
-      return false; // Hide completed items from marketplace entirely
-    }
-    if (item.sellerBlocked) {
-      return false; // Hide items from blocked sellers
-    }
+  const statusOrder = { available: 0, reserved: 1, sold: 2 };
 
-    const matchesSearch =
-      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      activeCategory === "All" ||
-      item.category?.toLowerCase() === activeCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
+  const filteredItems = items
+    .filter((item) => {
+      if (item.sellerBlocked) return false;
+
+      const matchesSearch =
+        item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        activeCategory === "All" ||
+        item.category?.toLowerCase() === activeCategory.toLowerCase();
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => (statusOrder[a.status] ?? 0) - (statusOrder[b.status] ?? 0));
 
   return (
     <div className="marketplace">
@@ -110,7 +109,7 @@ function Marketplace() {
       </div>
 
       <p className="items-count">
-        {filteredItems.length} item{filteredItems.length !== 1 && "s"} found
+        {filteredItems.filter(i => i.status !== "sold").length} item{filteredItems.filter(i => i.status !== "sold").length !== 1 && "s"} available
       </p>
 
       {/* Loading Skeleton */}
@@ -152,40 +151,43 @@ function Marketplace() {
       {/* Grid */}
       {!loading && filteredItems.length > 0 && (
         <div className="marketplace-grid">
-          {filteredItems.map((item) => (
-            <div
-              key={item.id}
-              className="product-card"
-              id={`product-${item.id}`}
-              onClick={() => navigate(`/item/${item.id}`)}
-              style={{ cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s" }}
-            >
-              <div className="product-card-image">
-                {item.image ? (
-                  <img src={item.image} alt={item.title} />
-                ) : (
-                  <div style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "var(--text-muted)"
-                  }}>
-                    <Package size={48} />
-                  </div>
-                )}
-                <span className={`product-card-badge ${item.status === "available" ? "badge-available" : "badge-reserved"}`}>
-                  {item.status === "available" ? "Available" : "Reserved"}
-                </span>
-              </div>
+          {filteredItems.map((item) => {
+            const isSold = item.status === "sold";
+            return (
+              <div
+                key={item.id}
+                className={`product-card${isSold ? " product-card-sold" : ""}`}
+                id={`product-${item.id}`}
+                onClick={() => navigate(`/item/${item.id}`)}
+                style={{ cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s" }}
+              >
+                <div className="product-card-image">
+                  {item.image ? (
+                    <img src={item.image} alt={item.title} />
+                  ) : (
+                    <div style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--text-muted)"
+                    }}>
+                      <Package size={48} />
+                    </div>
+                  )}
+                  <span className={`product-card-badge ${isSold ? "badge-sold" : item.status === "available" ? "badge-available" : "badge-reserved"}`}>
+                    {isSold ? "Sold" : item.status === "available" ? "Available" : "Reserved"}
+                  </span>
+                </div>
 
-              <div className="product-card-body">
-                <h3>{item.title}</h3>
-                <div className="price">₹{item.price}</div>
+                <div className="product-card-body">
+                  <h3>{item.title}</h3>
+                  <div className="price">₹{item.price}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

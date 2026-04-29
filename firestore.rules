@@ -50,14 +50,22 @@ service cloud.firestore {
       // upserts it with signInWithCustomToken → the UID must match
       allow create: if isOwner(userId) && isIITDUser();
 
-      // Owner may update their own profile but may not touch privileged fields.
+      // Owner may update their own profile.
+      // 'blocked' and 'uid' are never owner-writable.
+      // Identity fields (email, kerberos_id, entry_number, createdAt) may only be
+      // written when they are not yet set — this lets IITDCallback populate the
+      // full profile on first login while preventing users from later overwriting
+      // their verified IITD identity.
       // Admins may update anything (e.g. set blocked = true/false).
       allow update: if isAdmin() ||
                        (isOwner(userId) &&
                         !request.resource.data.diff(resource.data)
                           .affectedKeys()
-                          .hasAny(['blocked', 'uid', 'email', 'kerberos_id',
-                                   'entry_number', 'createdAt']));
+                          .hasAny(['blocked', 'uid']) &&
+                        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['email'])        || resource.data.get('email',        '') == '') &&
+                        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['kerberos_id'])  || resource.data.get('kerberos_id',  '') == '') &&
+                        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['entry_number']) || resource.data.get('entry_number', '') == '') &&
+                        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt'])    || resource.data.get('createdAt',    '') == ''));
 
       // Owner may delete their own account (cascading deletes handled in app);
       // admins may also delete a user document.

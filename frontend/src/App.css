@@ -806,6 +806,23 @@
   border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
+.badge-sold {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.product-card-sold {
+  opacity: 0.45;
+  filter: grayscale(60%);
+  pointer-events: auto;
+}
+
+.product-card-sold:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .product-card-body {
   padding: var(--space-lg);
 }
